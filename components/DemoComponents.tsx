@@ -2,7 +2,7 @@
 
 "use client";
 
-import { type ReactNode, useCallback, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useMemo } from "react";
 import { useAccount } from "wagmi";
 import {
   Transaction,
@@ -19,6 +19,9 @@ import {
 } from "@coinbase/onchainkit/transaction";
 import { useNotification } from "@coinbase/onchainkit/minikit";
 
+/**
+ * Button: Now uses 'btn-cyber' and cyberpunk style.
+ */
 type ButtonProps = {
   children: ReactNode;
   variant?: "primary" | "secondary" | "outline" | "ghost";
@@ -28,11 +31,10 @@ type ButtonProps = {
   disabled?: boolean;
   type?: "button" | "submit" | "reset";
   icon?: ReactNode;
-}
+};
 
 export function Button({
   children,
-  variant = "primary",
   size = "md",
   className = "",
   onClick,
@@ -40,26 +42,16 @@ export function Button({
   type = "button",
   icon,
 }: ButtonProps) {
-  const baseClasses =
-    "inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-accent)] disabled:opacity-50 disabled:pointer-events-none";
-
-  const variantClasses = {
-    primary: "bg-gradient-to-r from-[var(--primary-accent)] to-[var(--secondary-accent)] text-[var(--button-text)]",
-    secondary: "bg-[var(--header-bg)] hover:bg-[var(--container-bg)] text-[var(--text-color)]",
-    outline: "border border-[var(--primary-accent)] hover:bg-[var(--primary-accent)] hover:bg-opacity-20 text-[var(--primary-accent)]",
-    ghost: "hover:bg-[var(--primary-accent)] hover:bg-opacity-10 text-[var(--text-color)]",
-  };
-
+  // Variant and size are for optional extra classes, but btn-cyber is for cyberpunk!
   const sizeClasses = {
-    sm: "text-xs px-2.5 py-1.5 rounded-md",
-    md: "text-sm px-4 py-2 rounded-lg",
-    lg: "text-base px-6 py-3 rounded-lg",
+    sm: "text-xs px-2.5 py-1.5",
+    md: "text-sm px-4 py-2",
+    lg: "text-base px-6 py-3",
   };
-
   return (
     <button
       type={type}
-      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`btn-cyber ${sizeClasses[size]} ${className}`}
       onClick={onClick}
       disabled={disabled}
     >
@@ -74,7 +66,7 @@ type CardProps = {
   children: ReactNode;
   className?: string;
   onClick?: () => void;
-}
+};
 
 function Card({
   title,
@@ -88,7 +80,6 @@ function Card({
       onClick();
     }
   };
-
   return (
     <div
       className={`card ${className} ${onClick ? "cursor-pointer" : ""}`}
@@ -98,25 +89,71 @@ function Card({
       role={onClick ? "button" : undefined}
     >
       {title && (
-        <h3 className="text-lg font-medium text-[var(--heading-color)] mb-3">
-          {title}
-        </h3>
+        <h3 className="cyberpunk text-xl mb-3">{title}</h3>
       )}
       {children}
     </div>
   );
 }
 
-// Continue with the rest of your components...
-// (Icon, Docs, Main, TodoList, TransactionCard remain the same)
+// SVG Mushroom and Sun/Cyber icons for theme toggling
+export function MushroomIcon({ size = 24, className = "" }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <ellipse cx="16" cy="16" rx="13" ry="6" fill="#ff2c8f" />
+      <ellipse cx="16" cy="12" rx="14" ry="9" fill="#ffdc46" />
+      <ellipse cx="16" cy="12" rx="13" ry="8" fill="#46f4ff" />
+      <ellipse cx="16" cy="13.2" rx="8" ry="4.2" fill="#fff" opacity="0.8" />
+      <rect x="12" y="16" width="8" height="10" rx="4" fill="#fff" />
+      <ellipse cx="16" cy="28" rx="3" ry="1.5" fill="#d1d5db" />
+    </svg>
+  );
+}
+export function CyberSunIcon({ size = 24, className = "" }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="16" cy="16" r="8" fill="#ffdc46" />
+      <circle cx="16" cy="16" r="6" fill="#46f4ff" />
+      <g stroke="#ff2c8f" strokeWidth="2">
+        <line x1="16" y1="2" x2="16" y2="8" />
+        <line x1="16" y1="24" x2="16" y2="30" />
+        <line x1="2" y1="16" x2="8" y2="16" />
+        <line x1="24" y1="16" x2="30" y2="16" />
+        <line x1="6" y1="6" x2="11" y2="11" />
+        <line x1="21" y1="21" x2="26" y2="26" />
+        <line x1="21" y1="11" x2="26" y2="6" />
+        <line x1="6" y1="26" x2="11" y2="21" />
+      </g>
+    </svg>
+  );
+}
+
+type IconProps = {
+  name: "heart" | "star" | "check" | "plus" | "arrow-right";
+  size?: "sm" | "md" | "lg";
+  className?: string;
+};
 
 export function Icon({ name, size = "md", className = "" }: IconProps) {
   const sizeClasses = {
     sm: "w-4 h-4",
-    md: "w-5 h-5", 
+    md: "w-5 h-5",
     lg: "w-6 h-6",
   };
-
   const icons = {
     heart: (
       <svg
@@ -196,18 +233,11 @@ export function Icon({ name, size = "md", className = "" }: IconProps) {
       </svg>
     ),
   };
-
   return (
     <span className={`inline-block ${sizeClasses[size]} ${className}`}>
       {icons[name]}
     </span>
   );
-}
-
-type IconProps = {
-  name: "heart" | "star" | "check" | "plus" | "arrow-right";
-  size?: "sm" | "md" | "lg";
-  className?: string;
 }
 
 type DocsProps = {
@@ -220,31 +250,31 @@ export function Docs({ setActiveTab }: DocsProps) {
       <Card title="Docs & Socials">
         <ul className="space-y-3 mb-4">
           <li className="flex items-start">
-            <Icon name="check" className="text-[var(--primary-accent)] mt-1 mr-2" />
-            <span className="text-[var(--text-color)]">
-              White Paper: <a href="#" className="text-[var(--primary-accent)] hover:text-[var(--secondary-accent)]">Read Docs</a>
+            <Icon name="check" className="text-cyber mt-1 mr-2" />
+            <span>
+              White Paper: <a href="#" className="text-cyber hover:text-cyber-accent">Read Docs</a>
             </span>
           </li>
           <li className="flex items-start">
-            <Icon name="check" className="text-[var(--primary-accent)] mt-1 mr-2" />
-            <span className="text-[var(--text-color)]">
-              GitHub: <a href="#" className="text-[var(--primary-accent)] hover:text-[var(--secondary-accent)]">View Code</a>
+            <Icon name="check" className="text-cyber mt-1 mr-2" />
+            <span>
+              GitHub: <a href="#" className="text-cyber hover:text-cyber-accent">View Code</a>
             </span>
           </li>
           <li className="flex items-start">
-            <Icon name="check" className="text-[var(--primary-accent)] mt-1 mr-2" />
-            <span className="text-[var(--text-color)]">
-              Contract: <code className="text-[var(--highlight-accent)]">0xC80577...</code>
+            <Icon name="check" className="text-cyber mt-1 mr-2" />
+            <span>
+              Contract: <code className="text-cyber-accent">0xC80577...</code>
             </span>
           </li>
           <li className="flex items-start">
-            <Icon name="check" className="text-[var(--primary-accent)] mt-1 mr-2" />
-            <span className="text-[var(--text-color)]">
-              Farcaster: <a href="#" className="text-[var(--primary-accent)] hover:text-[var(--secondary-accent)]">/myutruvian</a>
+            <Icon name="check" className="text-cyber mt-1 mr-2" />
+            <span>
+              Farcaster: <a href="#" className="text-cyber hover:text-cyber-accent">/myutruvian</a>
             </span>
           </li>
         </ul>
-        <Button variant="outline" onClick={() => setActiveTab("Main")}>
+        <Button onClick={() => setActiveTab("Main")}>
           Back to Main
         </Button>
       </Card>
@@ -260,7 +290,7 @@ export function Main({ setActiveTab }: MainProps) {
   return (
     <div className="space-y-6 animate-fade-in">
       <Card title="Myceliyou Mini App">
-        <p className="text-[var(--text-color)] mb-4">
+        <p className="mb-4">
           Welcome to the Myceliyou Empire - built on base and expanding!
         </p>
         <Button
@@ -270,20 +300,20 @@ export function Main({ setActiveTab }: MainProps) {
           Explore Docs
         </Button>
       </Card>
-
       <TodoList />
-
       <TransactionCard />
     </div>
   );
 }
 
-// TodoList and TransactionCard components remain the same...
+// ✅ -- TodoList is now defined and included directly here.
+import { useState } from "react";
+
 type Todo = {
   id: number;
   text: string;
   completed: boolean;
-}
+};
 
 function TodoList() {
   const [todos, setTodos] = useState<Todo[]>([
@@ -334,7 +364,6 @@ function TodoList() {
             className="input-field flex-1"
           />
           <Button
-            variant="primary"
             size="md"
             onClick={addTodo}
             icon={<Icon name="plus" size="sm" />}
@@ -353,21 +382,21 @@ function TodoList() {
                   onClick={() => toggleTodo(todo.id)}
                   className={`w-5 h-5 rounded-full border flex items-center justify-center ${
                     todo.completed
-                      ? "bg-[var(--primary-accent)] border-[var(--primary-accent)]"
-                      : "border-[var(--text-color)] bg-transparent"
+                      ? "bg-[var(--cyber-primary)] border-[var(--cyber-primary)]"
+                      : "border-[var(--cyber-text-main)] bg-transparent"
                   }`}
                 >
                   {todo.completed && (
                     <Icon
                       name="check"
                       size="sm"
-                      className="text-[var(--button-text)]"
+                      className="text-[var(--cyber-bg)]"
                     />
                   )}
                 </button>
                 <label
                   htmlFor={`todo-${todo.id}`}
-                  className={`text-[var(--text-color)] cursor-pointer ${todo.completed ? "line-through opacity-70" : ""}`}
+                  className={`text-cyber cursor-pointer ${todo.completed ? "line-through opacity-70" : ""}`}
                 >
                   {todo.text}
                 </label>
@@ -375,7 +404,7 @@ function TodoList() {
               <button
                 type="button"
                 onClick={() => deleteTodo(todo.id)}
-                className="text-[var(--text-color)] hover:text-[var(--secondary-accent)] text-xl"
+                className="text-cyber hover:text-cyber-accent text-xl"
               >
                 ×
               </button>
@@ -389,47 +418,32 @@ function TodoList() {
 
 function TransactionCard() {
   const { address } = useAccount();
-
-  // Example transaction call - sending 0 ETH to self
   const calls = useMemo(() => address
-    ? [
-        {
-          to: address,
-          data: "0x" as `0x${string}`,
-          value: BigInt(0),
-        },
-      ]
+    ? [{ to: address, data: "0x" as `0x${string}`, value: BigInt(0) }]
     : [], [address]);
-
   const sendNotification = useNotification();
-
   const handleSuccess = useCallback(async (response: TransactionResponse) => {
     const transactionHash = response.transactionReceipts[0].transactionHash;
-
-    console.log(`Transaction successful: ${transactionHash}`);
-
     await sendNotification({
       title: "Congratulations!",
       body: `Transaction successful: ${transactionHash}!`,
     });
   }, [sendNotification]);
-
   return (
     <Card title="Yo thanks for minting!">
       <div className="space-y-4">
-        <p className="text-[var(--text-color)] mb-4">
-          The Myceliyou experience is brought to you by{" "}
+        <p className="mb-4">
+          The Myutruvian experience is brought to you by{" "}
           <a
-            href="schmidtiest.eth"
+            href="https://app.ens.domains/name/schmidtiest.eth"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[var(--primary-accent)] hover:text-[var(--secondary-accent)]"
+            className="text-cyber hover:text-cyber-accent"
           >
-            Myutruvian
+            schmidtiest.eth
           </a>
           .
         </p>
-
         <div className="flex flex-col items-center">
           {address ? (
             <Transaction
@@ -451,8 +465,8 @@ function TransactionCard() {
               </TransactionToast>
             </Transaction>
           ) : (
-            <p className="text-[var(--highlight-accent)] text-sm text-center mt-2">
-              Connect your wallet to send a transaction
+            <p className="text-cyber-accent text-md text-center mt-4">
+              Connect your wallet to make the magic happen!
             </p>
           )}
         </div>

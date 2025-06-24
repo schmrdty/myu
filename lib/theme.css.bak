@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Cyberpunk + Mycelium + Tron + Clean inspired styles */
+/* Cyberpunk + Mycelium + Tron + Apple inspired styles */
 :root {
   --cyber-primary: #46f4ff;
   --cyber-accent: #ffdc46;
@@ -16,8 +16,6 @@
   --cyber-text-main: #eaf6fa;
   --cyber-text-muted: #9ca4ba;
   --cyber-border: #2d3144;
-  --cyber-card-bg: var(--cyber-glass);
-  --cyber-card-border: #222c;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -30,10 +28,10 @@
 }
 
 body {
+  font-family: var(--cyber-font);
   background: var(--cyber-bg);
   color: var(--cyber-text-main);
-  font-family: var(--cyber-font);
-  font-size: 1.17rem;
+  font-size: 1.18rem;
   min-height: 100vh;
   margin: 0;
   transition: background 0.3s, color 0.3s;
@@ -55,7 +53,7 @@ main {
 }
 
 .card {
-  background: var(--cyber-card-bg);
+  background: var(--cyber-glass);
   border-radius: 1.25rem;
   box-shadow: 0 2px 24px #46f4ff22, 0 0 8px #ff2c8f44;
   padding: 2.2rem 2.8rem;
@@ -150,6 +148,7 @@ a:hover, a:focus {
   color: #fff;
 }
 
+/* Accessibility improvements */
 :focus-visible {
   outline: 2.5px dashed var(--cyber-accent);
   outline-offset: 3px;
@@ -159,6 +158,7 @@ button:focus-visible, .btn-cyber:focus-visible, .tab-btn:focus-visible {
   outline-offset: 2px;
 }
 
+/* Responsive */
 @media (max-width: 900px) {
   .card {
     padding: 1.5rem 0.8rem;
@@ -180,6 +180,7 @@ button:focus-visible, .btn-cyber:focus-visible, .tab-btn:focus-visible {
   }
 }
 
+/* Inputs and selects */
 input, select {
   background: var(--cyber-bg-light);
   color: var(--cyber-text-main);
@@ -195,6 +196,7 @@ input:focus, select:focus {
   box-shadow: 0 0 8px #ffdc46;
 }
 
+/* Checklist/radio buttons */
 input[type="radio"], input[type="checkbox"] {
   accent-color: var(--cyber-primary);
   width: 1.1em; height: 1.1em;
@@ -209,6 +211,7 @@ input[type="radio"], input[type="checkbox"] {
   border-radius: 8px;
 }
 
+/* Utility: visually hide text for screen readers */
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;
 }

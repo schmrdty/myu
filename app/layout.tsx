@@ -1,9 +1,8 @@
 // Location: /app/layout.tsx
 
-import "./theme.css"; // Your custom theme
+import "@/lib/theme.css"; // Your custom theme
 import "@coinbase/onchainkit/styles.css";
 import type { Metadata, Viewport } from "next";
-import "./globals.css";
 import { Providers } from "./providers";
 import { ThemeProvider } from "@/components/ThemeProvider";
 

@@ -1,3 +1,5 @@
+// Location: /components/DemoComponents.tsx
+
 "use client";
 
 import { type ReactNode, useCallback, useMemo, useState } from "react";
@@ -39,17 +41,13 @@ export function Button({
   icon,
 }: ButtonProps) {
   const baseClasses =
-    "inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0052FF] disabled:opacity-50 disabled:pointer-events-none";
+    "inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-accent)] disabled:opacity-50 disabled:pointer-events-none";
 
   const variantClasses = {
-    primary:
-      "bg-[var(--app-accent)] hover:bg-[var(--app-accent-hover)] text-[var(--app-background)]",
-    secondary:
-      "bg-[var(--app-gray)] hover:bg-[var(--app-gray-dark)] text-[var(--app-foreground)]",
-    outline:
-      "border border-[var(--app-accent)] hover:bg-[var(--app-accent-light)] text-[var(--app-accent)]",
-    ghost:
-      "hover:bg-[var(--app-accent-light)] text-[var(--app-foreground-muted)]",
+    primary: "bg-gradient-to-r from-[var(--primary-accent)] to-[var(--secondary-accent)] text-[var(--button-text)]",
+    secondary: "bg-[var(--header-bg)] hover:bg-[var(--container-bg)] text-[var(--text-color)]",
+    outline: "border border-[var(--primary-accent)] hover:bg-[var(--primary-accent)] hover:bg-opacity-20 text-[var(--primary-accent)]",
+    ghost: "hover:bg-[var(--primary-accent)] hover:bg-opacity-10 text-[var(--text-color)]",
   };
 
   const sizeClasses = {
@@ -93,102 +91,29 @@ function Card({
 
   return (
     <div
-      className={`bg-[var(--app-card-bg)] backdrop-blur-md rounded-xl shadow-lg border border-[var(--app-card-border)] overflow-hidden transition-all hover:shadow-xl ${className} ${onClick ? "cursor-pointer" : ""}`}
+      className={`card ${className} ${onClick ? "cursor-pointer" : ""}`}
       onClick={onClick}
       onKeyDown={onClick ? handleKeyDown : undefined}
       tabIndex={onClick ? 0 : undefined}
       role={onClick ? "button" : undefined}
     >
       {title && (
-        <div className="px-5 py-3 border-b border-[var(--app-card-border)]">
-          <h3 className="text-lg font-medium text-[var(--app-foreground)]">
-            {title}
-          </h3>
-        </div>
+        <h3 className="text-lg font-medium text-[var(--heading-color)] mb-3">
+          {title}
+        </h3>
       )}
-      <div className="p-5">{children}</div>
+      {children}
     </div>
   );
 }
 
-type FeaturesProps = {
-  setActiveTab: (tab: string) => void;
-};
-
-export function Features({ setActiveTab }: FeaturesProps) {
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <Card title="Key Features">
-        <ul className="space-y-3 mb-4">
-          <li className="flex items-start">
-            <Icon name="check" className="text-[var(--app-accent)] mt-1 mr-2" />
-            <span className="text-[var(--app-foreground-muted)]">
-              Minimalistic and beautiful UI design
-            </span>
-          </li>
-          <li className="flex items-start">
-            <Icon name="check" className="text-[var(--app-accent)] mt-1 mr-2" />
-            <span className="text-[var(--app-foreground-muted)]">
-              Responsive layout for all devices
-            </span>
-          </li>
-          <li className="flex items-start">
-            <Icon name="check" className="text-[var(--app-accent)] mt-1 mr-2" />
-            <span className="text-[var(--app-foreground-muted)]">
-              Dark mode support
-            </span>
-          </li>
-          <li className="flex items-start">
-            <Icon name="check" className="text-[var(--app-accent)] mt-1 mr-2" />
-            <span className="text-[var(--app-foreground-muted)]">
-              OnchainKit integration
-            </span>
-          </li>
-        </ul>
-        <Button variant="outline" onClick={() => setActiveTab("home")}>
-          Back to Home
-        </Button>
-      </Card>
-    </div>
-  );
-}
-
-type HomeProps = {
-  setActiveTab: (tab: string) => void;
-};
-
-export function Home({ setActiveTab }: HomeProps) {
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <Card title="My First Mini App">
-        <p className="text-[var(--app-foreground-muted)] mb-4">
-          This is a minimalistic Mini App built with OnchainKit components.
-        </p>
-        <Button
-          onClick={() => setActiveTab("features")}
-          icon={<Icon name="arrow-right" size="sm" />}
-        >
-          Explore Features
-        </Button>
-      </Card>
-
-      <TodoList />
-
-      <TransactionCard />
-    </div>
-  );
-}
-
-type IconProps = {
-  name: "heart" | "star" | "check" | "plus" | "arrow-right";
-  size?: "sm" | "md" | "lg";
-  className?: string;
-}
+// Continue with the rest of your components...
+// (Icon, Docs, Main, TodoList, TransactionCard remain the same)
 
 export function Icon({ name, size = "md", className = "" }: IconProps) {
   const sizeClasses = {
     sm: "w-4 h-4",
-    md: "w-5 h-5",
+    md: "w-5 h-5", 
     lg: "w-6 h-6",
   };
 
@@ -279,6 +204,81 @@ export function Icon({ name, size = "md", className = "" }: IconProps) {
   );
 }
 
+type IconProps = {
+  name: "heart" | "star" | "check" | "plus" | "arrow-right";
+  size?: "sm" | "md" | "lg";
+  className?: string;
+}
+
+type DocsProps = {
+  setActiveTab: (tab: string) => void;
+};
+
+export function Docs({ setActiveTab }: DocsProps) {
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <Card title="Docs & Socials">
+        <ul className="space-y-3 mb-4">
+          <li className="flex items-start">
+            <Icon name="check" className="text-[var(--primary-accent)] mt-1 mr-2" />
+            <span className="text-[var(--text-color)]">
+              White Paper: <a href="#" className="text-[var(--primary-accent)] hover:text-[var(--secondary-accent)]">Read Docs</a>
+            </span>
+          </li>
+          <li className="flex items-start">
+            <Icon name="check" className="text-[var(--primary-accent)] mt-1 mr-2" />
+            <span className="text-[var(--text-color)]">
+              GitHub: <a href="#" className="text-[var(--primary-accent)] hover:text-[var(--secondary-accent)]">View Code</a>
+            </span>
+          </li>
+          <li className="flex items-start">
+            <Icon name="check" className="text-[var(--primary-accent)] mt-1 mr-2" />
+            <span className="text-[var(--text-color)]">
+              Contract: <code className="text-[var(--highlight-accent)]">0xC80577...</code>
+            </span>
+          </li>
+          <li className="flex items-start">
+            <Icon name="check" className="text-[var(--primary-accent)] mt-1 mr-2" />
+            <span className="text-[var(--text-color)]">
+              Farcaster: <a href="#" className="text-[var(--primary-accent)] hover:text-[var(--secondary-accent)]">/myutruvian</a>
+            </span>
+          </li>
+        </ul>
+        <Button variant="outline" onClick={() => setActiveTab("Main")}>
+          Back to Main
+        </Button>
+      </Card>
+    </div>
+  );
+}
+
+type MainProps = {
+  setActiveTab: (tab: string) => void;
+};
+
+export function Main({ setActiveTab }: MainProps) {
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <Card title="Myceliyou Mini App">
+        <p className="text-[var(--text-color)] mb-4">
+          Welcome to the Myceliyou Empire - built on base and expanding!
+        </p>
+        <Button
+          onClick={() => setActiveTab("docs")}
+          icon={<Icon name="arrow-right" size="sm" />}
+        >
+          Explore Docs
+        </Button>
+      </Card>
+
+      <TodoList />
+
+      <TransactionCard />
+    </div>
+  );
+}
+
+// TodoList and TransactionCard components remain the same...
 type Todo = {
   id: number;
   text: string;
@@ -331,7 +331,7 @@ function TodoList() {
             onChange={(e) => setNewTodo(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Add a new task..."
-            className="flex-1 px-3 py-2 bg-[var(--app-card-bg)] border border-[var(--app-card-border)] rounded-lg text-[var(--app-foreground)] placeholder-[var(--app-foreground-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--app-accent)]"
+            className="input-field flex-1"
           />
           <Button
             variant="primary"
@@ -353,21 +353,21 @@ function TodoList() {
                   onClick={() => toggleTodo(todo.id)}
                   className={`w-5 h-5 rounded-full border flex items-center justify-center ${
                     todo.completed
-                      ? "bg-[var(--app-accent)] border-[var(--app-accent)]"
-                      : "border-[var(--app-foreground-muted)] bg-transparent"
+                      ? "bg-[var(--primary-accent)] border-[var(--primary-accent)]"
+                      : "border-[var(--text-color)] bg-transparent"
                   }`}
                 >
                   {todo.completed && (
                     <Icon
                       name="check"
                       size="sm"
-                      className="text-[var(--app-background)]"
+                      className="text-[var(--button-text)]"
                     />
                   )}
                 </button>
                 <label
                   htmlFor={`todo-${todo.id}`}
-                  className={`text-[var(--app-foreground-muted)] cursor-pointer ${todo.completed ? "line-through opacity-70" : ""}`}
+                  className={`text-[var(--text-color)] cursor-pointer ${todo.completed ? "line-through opacity-70" : ""}`}
                 >
                   {todo.text}
                 </label>
@@ -375,7 +375,7 @@ function TodoList() {
               <button
                 type="button"
                 onClick={() => deleteTodo(todo.id)}
-                className="text-[var(--app-foreground-muted)] hover:text-[var(--app-foreground)]"
+                className="text-[var(--text-color)] hover:text-[var(--secondary-accent)] text-xl"
               >
                 ×
               </button>
@@ -386,7 +386,6 @@ function TodoList() {
     </Card>
   );
 }
-
 
 function TransactionCard() {
   const { address } = useAccount();
@@ -411,22 +410,22 @@ function TransactionCard() {
 
     await sendNotification({
       title: "Congratulations!",
-      body: `You sent your a transaction, ${transactionHash}!`,
+      body: `Transaction successful: ${transactionHash}!`,
     });
   }, [sendNotification]);
 
   return (
-    <Card title="Make Your First Transaction">
+    <Card title="Yo thanks for minting!">
       <div className="space-y-4">
-        <p className="text-[var(--app-foreground-muted)] mb-4">
-          Experience the power of seamless sponsored transactions with{" "}
+        <p className="text-[var(--text-color)] mb-4">
+          The Myutruvian experience is brought to you by{" "}
           <a
-            href="https://onchainkit.xyz"
+            href="schmidtiest.eth"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#0052FF] hover:underline"
+            className="text-[var(--primary-accent)] hover:text-[var(--secondary-accent)]"
           >
-            OnchainKit
+            Myceliyou
           </a>
           .
         </p>
@@ -452,7 +451,7 @@ function TransactionCard() {
               </TransactionToast>
             </Transaction>
           ) : (
-            <p className="text-yellow-400 text-sm text-center mt-2">
+            <p className="text-[var(--highlight-accent)] text-sm text-center mt-2">
               Connect your wallet to send a transaction
             </p>
           )}
