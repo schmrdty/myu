@@ -1,0 +1,48 @@
+/* Location: /lib/theme.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Cyberpunk + Mycelium + Tron + Apple inspired styles */
+:root {
+  --cyber-primary: #46f4ff;
+  --cyber-accent: #ffdc46;
+  --cyber-danger: #ff2c8f;
+  --cyber-bg: #181a2b;
+  --cyber-glass: rgba(30,40,60,0.7);
+  --cyber-neon: 0 0 8px #46f4ff, 0 0 16px #ff2c8f;
+}
+
+body {
+  font-family: 'Inter', 'SF Pro', 'Roboto', 'sans-serif';
+  background: var(--cyber-bg);
+}
+
+.text-cyber { color: var(--cyber-primary); }
+
+.bg-cyberglass {
+  background: var(--cyber-glass);
+  backdrop-filter: blur(20px) saturate(140%);
+}
+
+.shadow-cyber {
+  box-shadow: 0 0 8px var(--cyber-primary), 0 0 24px #ff2c8f44;
+}
+
+.btn-cyber {
+  background: linear-gradient(90deg, #1e71b8 0%, #46f4ff 100%);
+  color: #111;
+  border-radius: 1.5em;
+  padding: 0.75em 2em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: 0 0 8px #46f4ff;
+  outline: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-cyber:hover, .btn-cyber:focus-visible {
+  background: linear-gradient(90deg, #46f4ff 0%, #ff2c8f 100%);
+  box-shadow: 0 0 12px #ffdc46, 0 0 24px #46f4ff;
+}

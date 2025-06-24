@@ -1,0 +1,23 @@
+// Location: /app/page.tsx
+
+"use client";
+
+import { Frame } from "@/components/Frame";
+import MintWidget from "@/components/MintWidget";
+
+export default function Home() {
+  return (
+    <div className="min-h-screen">
+      <Frame>
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-4xl font-bold text-center mb-8">
+            Myutruvian NFT
+          </h1>
+          <div className="max-w-md mx-auto">
+            <MintWidget />
+          </div>
+        </div>
+      </Frame>
+    </div>
+  );
+}
