@@ -1,210 +1,322 @@
 // Location: /components/MintWidget.tsx
 
-"use client";
+import { useState } from "react";
+import { useAccount, useReadContract, useWriteContract, useSimulateContract } from "wagmi";
+import { formatUnits, parseUnits } from "viem";
+import { CONTRACT_ADDRESS, NFT_ABI, TOKENS, ERC20_ABI } from "@/lib/constants";
+import { Button } from "@/components/DemoComponents";
 
-import { useState, useEffect } from "react";
-import { usePublicClient, useWalletClient, useAccount } from "wagmi";
-import { CONTRACT_ADDRESS, CONTRACT_ABI } from "@/lib/constants";
-import { formatEther } from "viem";
+const MINT_OPTIONS = [1, 5, 10, 20, 50, 100, 500];
+
+function formatTokenAmount(amount: bigint, decimals: number) {
+  const v = Number(formatUnits(amount, decimals));
+  return v.toLocaleString(undefined, { maximumFractionDigits: 6 });
+}
 
 export default function MintWidget() {
-  const publicClient = usePublicClient();
-  const { data: walletClient } = useWalletClient();
-  const { address, isConnected } = useAccount();
-  
-  // ✅ State variables
-  const [userMints, setUserMints] = useState<bigint>(0n);
-  const [remainingMints, setRemainingMints] = useState<bigint>(0n);
-  const [currentTierNum, setCurrentTierNum] = useState<bigint>(0n);
-  const [ethPrice, setEthPrice] = useState<bigint>(0n);
-  const [myuPrice, setMyuPrice] = useState<bigint>(0n);
-  const [degenPrice, setDegenPrice] = useState<bigint>(0n);
-  const [totalMinted, setTotalMinted] = useState<bigint>(0n);
-  const [maxSupply, setMaxSupply] = useState<bigint>(0n);
-  const [loading, setLoading] = useState(false);
-  const [dataLoaded, setDataLoaded] = useState(false);
+  const { address } = useAccount();
+  const [mintAmount, setMintAmount] = useState(1);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!publicClient) return;
+  // Contract reads (live data)
+  const { data: mintedRaw, isLoading: isMintedLoading } = useReadContract({
+    abi: NFT_ABI,
+    address: CONTRACT_ADDRESS,
+    functionName: "totalSupply",
+  });
+  const { data: maxSupplyRaw, isLoading: isMaxSupplyLoading } = useReadContract({
+    abi: NFT_ABI,
+    address: CONTRACT_ADDRESS,
+    functionName: "maxSupply",
+  });
+  const { data: remainingRaw, isLoading: isRemainingLoading } = useReadContract({
+    abi: NFT_ABI,
+    address: CONTRACT_ADDRESS,
+    functionName: "remainingMints",
+  });
+  const { data: currentTierRaw, isLoading: isTierLoading } = useReadContract({
+    abi: NFT_ABI,
+    address: CONTRACT_ADDRESS,
+    functionName: "currentTier",
+  });
+  // User mints: use mintsBy(address)
+  const { data: userMintsRaw, isLoading: isUserMintsLoading } = useReadContract({
+    abi: NFT_ABI,
+    address: CONTRACT_ADDRESS,
+    functionName: "mintsBy",
+    args: [address ?? "0x0"],
+    query: { enabled: !!address },
+  });
 
-    (async () => {
-      try {
-        setError(null);
-        
-        // ✅ If no address, fetch general contract info
-        const contractAddress = address || "0x0000000000000000000000000000000000000000";
-        
-        console.log("Fetching mint info for:", contractAddress);
-        
-        const [
-          userMints,
-          remainingMints,
-          currentTierNum,
-          ethPrice,
-          myuPrice,
-          degenPrice,
-          totalMinted,
-          maxSupply
-        ] = await publicClient.readContract({
-          address: CONTRACT_ADDRESS,
-          abi: CONTRACT_ABI,
-          functionName: "getMintInfo",
-          args: [contractAddress],
-        }) as readonly [bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint];
+  // Type guards for bigint responses
+  const minted = typeof mintedRaw === "bigint" ? Number(mintedRaw) : 0;
+  const maxSupply = typeof maxSupplyRaw === "bigint" ? Number(maxSupplyRaw) : 0;
+  const remaining = typeof remainingRaw === "bigint" ? Number(remainingRaw) : 0;
+  const currentTier = typeof currentTierRaw === "bigint" ? Number(currentTierRaw) : 0;
+  const userMints = typeof userMintsRaw === "bigint" ? Number(userMintsRaw) : 0;
 
-        setUserMints(userMints);
-        setRemainingMints(remainingMints);
-        setCurrentTierNum(currentTierNum);
-        setEthPrice(ethPrice);
-        setMyuPrice(myuPrice);
-        setDegenPrice(degenPrice);
-        setTotalMinted(totalMinted);
-        setMaxSupply(maxSupply);
-        setDataLoaded(true);
-      } catch (error) {
-        console.error("Failed to fetch mint info:", error);
-        setError("Failed to load contract data. Please check your connection.");
-        setDataLoaded(true); // Set loaded even on error to show error state
-      }
-    })();
-  }, [publicClient, address]);
+  // Prices (per unit * mintAmount)
+  const ETH_PRICE = parseUnits("0.00069", 18) * BigInt(mintAmount);
+  const MYU_PRICE = parseUnits("5000000000000000000", 18) * BigInt(mintAmount);
+  const DEGEN_PRICE = parseUnits("5250000000000000000", 18) * BigInt(mintAmount);
 
-  const handleMint = async (method: "eth" | "myu" | "degen", amount: number) => {
-    // ✅ Check if wallet is connected
-    if (!isConnected) {
-      setError("Please connect your wallet first");
-      return;
-    }
-    
-    if (!walletClient || !address || !publicClient) return;
+  // Allowance checks (using wagmi hooks, cast as bigint)
+  const { data: myuAllowanceRaw } = useReadContract({
+    abi: ERC20_ABI,
+    address: TOKENS.MYU.address as `0x${string}`,
+    functionName: "allowance",
+    args: [address ?? "0x0", CONTRACT_ADDRESS],
+    query: { enabled: !!address },
+  });
+  const { data: degenAllowanceRaw } = useReadContract({
+    abi: ERC20_ABI,
+    address: TOKENS.DEGEN.address as `0x${string}`,
+    functionName: "allowance",
+    args: [address ?? "0x0", CONTRACT_ADDRESS],
+    query: { enabled: !!address },
+  });
 
-    setLoading(true);
+  const myuAllowance: bigint = typeof myuAllowanceRaw === "bigint" ? myuAllowanceRaw : 0n;
+  const degenAllowance: bigint = typeof degenAllowanceRaw === "bigint" ? degenAllowanceRaw : 0n;
+
+  const needsMyuApproval = myuAllowance < MYU_PRICE;
+  const needsDegenApproval = degenAllowance < DEGEN_PRICE;
+
+  // Approve & mint hooks
+  const { writeContract: writeApproveMyu, isPending: isMyuApproving } = useWriteContract();
+  const { writeContract: writeApproveDegen, isPending: isDegenApproving } = useWriteContract();
+  const { writeContract: writeMintEth, isPending: isMintEth } = useWriteContract();
+  const { writeContract: writeMintMyu, isPending: isMintMyu } = useWriteContract();
+  const { writeContract: writeMintDegen, isPending: isMintDegen } = useWriteContract();
+
+  // --- Simulation hooks ---
+  const { data: canMintEth, error: mintEthSimError } = useSimulateContract({
+    abi: NFT_ABI,
+    address: CONTRACT_ADDRESS,
+    functionName: "mintWithEth",
+    args: [mintAmount],
+    value: ETH_PRICE,
+    query: { enabled: !!address && mintAmount > 0 },
+  });
+  const { data: canMintMyu, error: mintMyuSimError } = useSimulateContract({
+    abi: NFT_ABI,
+    address: CONTRACT_ADDRESS,
+    functionName: "mintWithMyu",
+    args: [mintAmount],
+    query: { enabled: !!address && mintAmount > 0 && !needsMyuApproval },
+  });
+  const { data: canMintDegen, error: mintDegenSimError } = useSimulateContract({
+    abi: NFT_ABI,
+    address: CONTRACT_ADDRESS,
+    functionName: "mintWithDegen",
+    args: [mintAmount],
+    query: { enabled: !!address && mintAmount > 0 && !needsDegenApproval },
+  });
+
+  // --- Handlers ---
+  function handleMintEth() {
     setError(null);
-    
     try {
-      // ✅ Removed unused functionName variable
-      if (method === "eth") {
-        const { request } = await publicClient.simulateContract({
-          address: CONTRACT_ADDRESS,
-          abi: CONTRACT_ABI,
-          functionName: "mintWithEth",
-          args: [BigInt(amount)],
-          account: address,
-          value: ethPrice * BigInt(amount),
-        });
-        await walletClient.writeContract(request);
-      } else if (method === "myu") {
-        const { request } = await publicClient.simulateContract({
-          address: CONTRACT_ADDRESS,
-          abi: CONTRACT_ABI,
-          functionName: "mintWithMyu",
-          args: [BigInt(amount)],
-          account: address,
-        });
-        await walletClient.writeContract(request);
-      } else if (method === "degen") {
-        const { request } = await publicClient.simulateContract({
-          address: CONTRACT_ADDRESS,
-          abi: CONTRACT_ABI,
-          functionName: "mintWithDegen",
-          args: [BigInt(amount)],
-          account: address,
-        });
-        await walletClient.writeContract(request);
+      writeMintEth({
+        abi: NFT_ABI,
+        address: CONTRACT_ADDRESS,
+        functionName: "mintWithEth",
+        args: [mintAmount],
+        value: ETH_PRICE,
+      });
+    } catch (e: unknown) {
+      if (e && typeof e === "object" && "message" in e && typeof (e as { message?: unknown }).message === "string") {
+        setError((e as { message: string }).message);
+      } else {
+        setError("Failed to mint with ETH");
       }
-      
-      // ✅ Refresh data after successful mint
-      setTimeout(() => {
-        window.location.reload();
-      }, 3000);
-    } catch (error: unknown) { // ✅ Fixed: Proper error typing
-      console.error("Mint failed:", error);
-      const errorMessage = error instanceof Error ? error.message : "Mint failed. Please try again.";
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
     }
-  };
-
-  // ✅ Show loading state while data is being fetched
-  if (!dataLoaded) {
-    return (
-      <div className="p-6 bg-card rounded-lg shadow-lg">
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <span className="ml-2">Loading contract data...</span>
-        </div>
-      </div>
-    );
+  }
+  function handleMintMyu() {
+    setError(null);
+    try {
+      writeMintMyu({
+        abi: NFT_ABI,
+        address: CONTRACT_ADDRESS,
+        functionName: "mintWithMyu",
+        args: [mintAmount],
+      });
+    } catch (e: unknown) {
+      if (e && typeof e === "object" && "message" in e && typeof (e as { message?: unknown }).message === "string") {
+        setError((e as { message: string }).message);
+      } else {
+        setError("Failed to mint with MYU");
+      }
+    }
+  }
+  function handleMintDegen() {
+    setError(null);
+    try {
+      writeMintDegen({
+        abi: NFT_ABI,
+        address: CONTRACT_ADDRESS,
+        functionName: "mintWithDegen",
+        args: [mintAmount],
+      });
+    } catch (e: unknown) {
+      if (e && typeof e === "object" && "message" in e && typeof (e as { message?: unknown }).message === "string") {
+        setError((e as { message: string }).message);
+      } else {
+        setError("Failed to mint with DEGEN");
+      }
+    }
+  }
+  function handleApproveMyu() {
+    setError(null);
+    try {
+      writeApproveMyu({
+        abi: ERC20_ABI,
+        address: TOKENS.MYU.address as `0x${string}`,
+        functionName: "approve",
+        args: [CONTRACT_ADDRESS, MYU_PRICE],
+      });
+    } catch (e: unknown) {
+      if (e && typeof e === "object" && "message" in e && typeof (e as { message?: unknown }).message === "string") {
+        setError((e as { message: string }).message);
+      } else {
+        setError("Failed to approve MYU");
+      }
+    }
+  }
+  function handleApproveDegen() {
+    setError(null);
+    try {
+      writeApproveDegen({
+        abi: ERC20_ABI,
+        address: TOKENS.DEGEN.address as `0x${string}`,
+        functionName: "approve",
+        args: [CONTRACT_ADDRESS, DEGEN_PRICE],
+      });
+    } catch (e: unknown) {
+      if (e && typeof e === "object" && "message" in e && typeof (e as { message?: unknown }).message === "string") {
+        setError((e as { message: string }).message);
+      } else {
+        setError("Failed to approve DEGEN");
+      }
+    }
   }
 
-  // ✅ Show error state if there's an error
-  if (error && !isConnected) {
-    return (
-      <div className="p-6 bg-card rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold mb-4">Mint Myutruvian NFT</h2>
-        <p className="text-red-500 mb-4">{error}</p>
-        <p className="text-gray-600">Please connect your wallet to mint.</p>
-      </div>
-    );
-  }
+  // --- Loading state for contract reads ---
+  const isLoading =
+    isMintedLoading ||
+    isMaxSupplyLoading ||
+    isRemainingLoading ||
+    isTierLoading ||
+    isUserMintsLoading;
 
+  // --- Render ---
   return (
-    <div className="p-6 bg-card rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold mb-4">Mint Myutruvian NFT</h2>
-      
+    <div className="card" style={{ maxWidth: 420, margin: "0 auto" }}>
+      <h2 className="cyberpunk text-2xl mb-4">Mint Myutruvian NFT</h2>
+      {isLoading ? (
+        <div className="mb-2">Loading mint info...</div>
+      ) : (
+        <>
+          <div className="mb-2">
+            <strong>Minted:</strong> {minted}/{maxSupply}
+          </div>
+          <div className="mb-2">
+            <strong>Your Mints:</strong> {userMints}/501
+          </div>
+          <div className="mb-2">
+            <strong>Remaining:</strong> {remaining}
+          </div>
+          <div className="mb-2">
+            <strong>Current Tier:</strong> {currentTier}
+          </div>
+        </>
+      )}
       {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-3">
           {error}
         </div>
       )}
-      
-      <div className="space-y-2 mb-6">
-        <p>Minted: {totalMinted.toString()}/{maxSupply.toString()}</p>
-        {isConnected && (
-          <>
-            <p>Your Mints: {userMints.toString()}/501</p>
-            <p>Remaining: {remainingMints.toString()}</p>
-          </>
-        )}
-        <p>Current Tier: {currentTierNum.toString()}</p>
+      <div className="mb-4">
+        <strong>Mint Amount:</strong>{" "}
+        <select
+          className="rounded px-2 py-1"
+          value={mintAmount}
+          onChange={e => setMintAmount(Number(e.target.value))}
+        >
+          {MINT_OPTIONS.map(n => (
+            <option key={n} value={n}>{n}</option>
+          ))}
+        </select>
       </div>
-
-      <div className="space-y-4">
-        <div>
-          <p className="mb-2">ETH Price: {formatEther(ethPrice)} ETH</p>
-          <button
-            onClick={() => handleMint("eth", 1)}
-            disabled={loading || !isConnected}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {!isConnected ? "Connect Wallet" : loading ? "Minting..." : "Mint with ETH"}
-          </button>
-        </div>
-
-        <div>
-          <p className="mb-2">MYU Price: {myuPrice.toString()} MYU</p>
-          <button
-            onClick={() => handleMint("myu", 1)}
-            disabled={loading || !isConnected}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {!isConnected ? "Connect Wallet" : loading ? "Minting..." : "Mint with MYU"}
-          </button>
-        </div>
-
-        <div>
-          <p className="mb-2">DEGEN Price: {degenPrice.toString()} DEGEN</p>
-          <button
-            onClick={() => handleMint("degen", 1)}
-            disabled={loading || !isConnected}
-            className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {!isConnected ? "Connect Wallet" : loading ? "Minting..." : "Mint with DEGEN"}
-          </button>
-        </div>
+      <div className="mb-4">
+        <strong>ETH Price:</strong> {formatTokenAmount(ETH_PRICE, TOKENS.ETH.decimals)} ETH
       </div>
+      {mintEthSimError && (
+        <div className="text-red-600 mb-2">Simulation failed: {mintEthSimError.message}</div>
+      )}
+      <Button
+        variant="primary"
+        size="lg"
+        onClick={handleMintEth}
+        disabled={isMintEth || !canMintEth || !!mintEthSimError || isLoading}
+      >
+        {isMintEth ? "Minting..." : "Mint with ETH"}
+      </Button>
+
+      <div className="mt-4 mb-1">
+        <strong>MYU Price:</strong> {formatTokenAmount(MYU_PRICE, TOKENS.MYU.decimals)} MYU
+      </div>
+      {needsMyuApproval ? (
+        <Button
+          variant="secondary"
+          size="md"
+          onClick={handleApproveMyu}
+          disabled={isMyuApproving || isLoading}
+        >
+          {isMyuApproving ? "Approving..." : "Approve MYU"}
+        </Button>
+      ) : (
+        <>
+          {mintMyuSimError && (
+            <div className="text-red-600 mb-2">Simulation failed: {mintMyuSimError.message}</div>
+          )}
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={handleMintMyu}
+            disabled={isMintMyu || !canMintMyu || !!mintMyuSimError || isLoading}
+          >
+            {isMintMyu ? "Minting..." : "Mint with MYU"}
+          </Button>
+        </>
+      )}
+      <div className="mt-4 mb-1">
+        <strong>DEGEN Price:</strong> {formatTokenAmount(DEGEN_PRICE, TOKENS.DEGEN.decimals)} DEGEN
+      </div>
+      {needsDegenApproval ? (
+        <Button
+          variant="secondary"
+          size="md"
+          onClick={handleApproveDegen}
+          disabled={isDegenApproving || isLoading}
+        >
+          {isDegenApproving ? "Approving..." : "Approve DEGEN"}
+        </Button>
+      ) : (
+        <>
+          {mintDegenSimError && (
+            <div className="text-red-600 mb-2">Simulation failed: {mintDegenSimError.message}</div>
+          )}
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={handleMintDegen}
+            disabled={isMintDegen || !canMintDegen || !!mintDegenSimError || isLoading}
+          >
+            {isMintDegen ? "Minting..." : "Mint with DEGEN"}
+          </Button>
+        </>
+      )}
     </div>
   );
 }

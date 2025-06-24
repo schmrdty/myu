@@ -8,10 +8,11 @@ import { Name, Identity, Address, Avatar, EthBalance } from "@coinbase/onchainki
 import { ConnectWallet, Wallet, WalletDropdown, WalletDropdownDisconnect } from "@coinbase/onchainkit/wallet";
 import { useAccount } from "wagmi";
 
-import { Button, Icon, Main, Docs } from "@/components/DemoComponents";
+import { Button, Icon, Main, Docs as Crocs } from "@/components/DemoComponents";
 import { FrameButton } from "@/components/FrameButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import MintWidget from "@/components/MintWidget";
+import { Docs } from "@/components/Docs";
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
@@ -89,22 +90,29 @@ export default function App() {
           Main
         </div>
         <div
-          className={`tab ${activeTab === "docs" ? "active" : ""}`}
-          onClick={() => setActiveTab("docs")}
+	  className={`tab ${activeTab === "docs" ? "active" : ""}`}
+	  onClick={() => setActiveTab("docs")}
+	>
+	  Docs & Socials
+	</div>
+	<div
+          className={`tab ${activeTab === "crocs" ? "active" : ""}`}
+          onClick={() => setActiveTab("crocs")}
         >
-          Docs & Socials
+          Checklist
         </div>
         <div
           className={`tab ${activeTab === "mint" ? "active" : ""}`}
           onClick={() => setActiveTab("mint")}
         >
-          Mint
+          <strong>Mint</strong>
         </div>
       </nav>
 
       <main className="main-content">
         {activeTab === "Main" && <Main setActiveTab={setActiveTab} />}
         {activeTab === "docs" && <Docs setActiveTab={setActiveTab} />}
+	{activeTab === "crocs" && <Crocs setActiveTab={setActiveTab} />}
         {activeTab === "mint" && (
           <div className="flex flex-col items-center gap-6">
             <h1 className="cyberpunk text-3xl">Myutruvian NFT</h1>

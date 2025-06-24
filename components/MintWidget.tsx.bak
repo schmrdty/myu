@@ -1,0 +1,148 @@
+// Location: /components/MintWidget.tsx
+
+import { useState, useMemo } from "react";
+import { useAccount, useReadContract, useWriteContract, useSimulateContract } from "wagmi";
+import { formatUnits, parseUnits } from "viem";
+import { CONTRACT_ADDRESS, NFT_ABI, TOKENS, ERC20_ABI } from "@/lib/constants";
+import { Button } from "@/components/DemoComponents";
+
+function formatTokenAmount(amount: bigint, decimals: number) {
+  const v = Number(formatUnits(amount, decimals));
+  return v.toLocaleString(undefined, { maximumFractionDigits: 6 });
+}
+
+export default function MintWidget() {
+  const { address } = useAccount();
+
+  // Display values (simulate for now—replace with contract calls as needed)
+  const minted = 0, maxSupply = 20000, userMints = 0, remaining = 501, currentTier = 0;
+  const ETH_PRICE = parseUnits("0.00069", 18);
+  const MYU_PRICE = parseUnits("5000000000000000000", 18);
+  const DEGEN_PRICE = parseUnits("5250000000000000000", 18);
+
+  // Allowance checks (using wagmi hooks)
+  const { data: myuAllowance = 0n } = useReadContract({
+    abi: ERC20_ABI,
+    address: TOKENS.MYU.address as `0x${string}`,
+    functionName: "allowance",
+    args: [address ?? "0x0", CONTRACT_ADDRESS],
+    query: { enabled: !!address },
+  });
+  const { data: degenAllowance = 0n } = useReadContract({
+    abi: ERC20_ABI,
+    6address: TOKENS.DEGEN.address as `0x${string}`,
+    functionName: "allowance",
+    args: [address ?? "0x0", CONTRACT_ADDRESS],
+    query: { enabled: !!address },
+  });
+
+  const needsMyuApproval = myuAllowance < MYU_PRICE;
+  const needsDegenApproval = degenAllowance < DEGEN_PRICE;
+
+  // Approve & mint hooks
+  const { writeContract: writeApproveMyu, isPending: isMyuApproving } = useWriteContract();
+  const { writeContract: writeApproveDegen, isPending: isDegenApproving } = useWriteContract();
+  const { writeContract: writeMintEth, isPending: isMintEth } = useWriteContract();
+  const { writeContract: writeMintMyu, isPending: isMintMyu } = useWriteContract();
+  const { writeContract: writeMintDegen, isPending: isMintDegen } = useWriteContract();
+
+  // Mint/approve handlers
+  return (
+    <div className="card" style={{ maxWidth: 420, margin: "0 auto" }}>
+      <h2 className="cyberpunk text-2xl mb-4">Mint Myutruvian NFT</h2>
+      <div className="mb-2">
+        <strong>Minted:</strong> {minted}/{maxSupply}
+      </div>
+      <div className="mb-2">
+        <strong>Your Mints:</strong> {userMints}/501
+      </div>
+      <div className="mb-2">
+        <strong>Remaining:</strong> {remaining}
+      </div>
+      <div className="mb-2">
+        <strong>Current Tier:</strong> {currentTier}
+      </div>
+      <div className="mb-4">
+        <strong>ETH Price:</strong> {formatTokenAmount(ETH_PRICE, TOKENS.ETH.decimals)} ETH
+      </div>
+      <Button
+        variant="primary"
+        size="lg"
+        onClick={() => writeMintEth({
+          abi: NFT_ABI,
+          address: CONTRACT_ADDRESS,
+          functionName: "mintWithEth",
+          args: [1],
+          value: ETH_PRICE,
+        })}
+        disabled={isMintEth}
+      >
+        {isMintEth ? "Minting..." : "Mint with ETH"}
+      </Button>
+      <div className="mt-4 mb-1">
+        <strong>MYU Price:</strong> {formatTokenAmount(MYU_PRICE, TOKENS.MYU.decimals)} MYU
+      </div>
+      {needsMyuApproval ? (
+        <Button
+          variant="secondary"
+          size="md"
+          onClick={() => writeApproveMyu({
+            abi: ERC20_ABI,
+            address: TOKENS.MYU.address as `0x${string}`,
+            functionName: "approve",
+            args: [CONTRACT_ADDRESS, MYU_PRICE],
+          })}
+          disabled={isMyuApproving}
+        >
+          {isMyuApproving ? "Approving..." : "Approve MYU"}
+        </Button>
+      ) : (
+        <Button
+          variant="success"
+          size="lg"
+          onClick={() => writeMintMyu({
+            abi: NFT_ABI,
+            address: CONTRACT_ADDRESS,
+            functionName: "mintWithMyu",
+            args: [1],
+          })}
+          disabled={isMintMyu}
+        >
+          {isMintMyu ? "Minting..." : "Mint with MYU"}
+        </Button>
+      )}
+      <div className="mt-4 mb-1">
+        <strong>DEGEN Price:</strong> {formatTokenAmount(DEGEN_PRICE, TOKENS.DEGEN.decimals)} DEGEN
+      </div>
+      {needsDegenApproval ? (
+        <Button
+          variant="secondary"
+          size="md"
+          onClick={() => writeApproveDegen({
+            abi: ERC20_ABI,
+            address: TOKENS.DEGEN.address as `0x${string}`,
+            functionName: "approve",
+            args: [CONTRACT_ADDRESS, DEGEN_PRICE],
+          })}
+          disabled={isDegenApproving}
+        >
+          {isDegenApproving ? "Approving..." : "Approve DEGEN"}
+        </Button>
+      ) : (
+        <Button
+          variant="purple"
+          size="lg"
+          onClick={() => writeMintDegen({
+            abi: NFT_ABI,
+            address: CONTRACT_ADDRESS,
+            functionName: "mintWithDegen",
+            args: [1],
+          })}
+          disabled={isMintDegen}
+        >
+          {isMintDegen ? "Minting..." : "Mint with DEGEN"}
+        </Button>
+      )}
+    </div>
+  );
+}

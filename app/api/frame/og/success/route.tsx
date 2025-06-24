@@ -1,4 +1,4 @@
-// Location: /app/api/frame/og/success/route.tsx (note: .tsx not .ts)
+// Location: /app/api/frame/og/success/route.tsx
 
 import { ImageResponse } from "@vercel/og";
 

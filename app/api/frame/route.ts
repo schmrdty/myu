@@ -3,7 +3,7 @@
 import type { NextRequest } from "next/server";
 import { createPublicClient, http, formatEther } from "viem";
 import { base } from "viem/chains";
-import { CONTRACT_ADDRESS, CONTRACT_ABI, BASE_RPC_URL } from "@/lib/constants";
+import { CONTRACT_ADDRESS, NFT_ABI, BASE_RPC_URL } from "@/lib/constants";
 
 const publicClient = createPublicClient({
   chain: base,
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       maxSupply
     ] = await publicClient.readContract({
       address: CONTRACT_ADDRESS,
-      abi: CONTRACT_ABI,
+      abi: NFT_ABI,
       functionName: "getMintInfo",
       args: [userAddress as `0x${string}`],
     }) as readonly [bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint];
