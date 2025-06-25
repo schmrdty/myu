@@ -10,7 +10,7 @@ export function MintFrameButton() {
       rel="noopener noreferrer"
       className="inline-block px-6 py-3 bg-purple-700 text-white rounded-lg shadow transition hover:bg-purple-800"
     >
-      Mint via Farcaster Frame
+      Mint via Farcaster Frame (coming soon)
     </a>
   )
 }

@@ -1,8 +1,8 @@
 // Location: /components/MintWidget.tsx
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAccount, useReadContract, useWriteContract, useSimulateContract } from "wagmi";
-import { formatUnits, parseUnits } from "viem";
+import { formatUnits, parseUnits, formatEther } from "viem";
 import { CONTRACT_ADDRESS, NFT_ABI, TOKENS, ERC20_ABI } from "@/lib/constants";
 import { Button } from "@/components/DemoComponents";
 
@@ -14,53 +14,40 @@ function formatTokenAmount(amount: bigint, decimals: number) {
 }
 
 export default function MintWidget() {
-  const { address } = useAccount();
+  const { address, chain } = useAccount();
   const [mintAmount, setMintAmount] = useState(1);
   const [error, setError] = useState<string | null>(null);
 
-  // Contract reads (live data)
-  const { data: mintedRaw, isLoading: isMintedLoading } = useReadContract({
+  // ⏺️ Read all mint info from contract (single call for everything)
+  const { data: mintInfoRaw, isLoading: isMintInfoLoading } = useReadContract({
     abi: NFT_ABI,
     address: CONTRACT_ADDRESS,
-    functionName: "totalSupply",
-  });
-  const { data: maxSupplyRaw, isLoading: isMaxSupplyLoading } = useReadContract({
-    abi: NFT_ABI,
-    address: CONTRACT_ADDRESS,
-    functionName: "maxSupply",
-  });
-  const { data: remainingRaw, isLoading: isRemainingLoading } = useReadContract({
-    abi: NFT_ABI,
-    address: CONTRACT_ADDRESS,
-    functionName: "remainingMints",
-  });
-  const { data: currentTierRaw, isLoading: isTierLoading } = useReadContract({
-    abi: NFT_ABI,
-    address: CONTRACT_ADDRESS,
-    functionName: "currentTier",
-  });
-  // User mints: use mintsBy(address)
-  const { data: userMintsRaw, isLoading: isUserMintsLoading } = useReadContract({
-    abi: NFT_ABI,
-    address: CONTRACT_ADDRESS,
-    functionName: "mintsBy",
-    args: [address ?? "0x0"],
-    query: { enabled: !!address },
+    functionName: "getMintInfo",
+    args: [address ?? "0x0000000000000000000000000000000000000000"],
   });
 
-  // Type guards for bigint responses
-  const minted = typeof mintedRaw === "bigint" ? Number(mintedRaw) : 0;
-  const maxSupply = typeof maxSupplyRaw === "bigint" ? Number(maxSupplyRaw) : 0;
-  const remaining = typeof remainingRaw === "bigint" ? Number(remainingRaw) : 0;
-  const currentTier = typeof currentTierRaw === "bigint" ? Number(currentTierRaw) : 0;
-  const userMints = typeof userMintsRaw === "bigint" ? Number(userMintsRaw) : 0;
+  // Parse contract return (guard for undefined)
+  const [
+    userMints,
+    remainingMints,
+    currentTierNum,
+    ethPriceRaw,
+    myuPriceRaw,
+    degenPriceRaw,
+    totalMinted,
+    maxSupply,
+  ] = Array.isArray(mintInfoRaw) && mintInfoRaw.length === 8
+    ? mintInfoRaw as [
+        bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint
+      ]
+    : [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n];
 
-  // Prices (per unit * mintAmount)
-  const ETH_PRICE = parseUnits("0.00069", 18) * BigInt(mintAmount);
-  const MYU_PRICE = parseUnits("5000000000000000000", 18) * BigInt(mintAmount);
-  const DEGEN_PRICE = parseUnits("5250000000000000000", 18) * BigInt(mintAmount);
+  // Prices per NFT (for current tier)
+  const ethPrice = ethPriceRaw * BigInt(mintAmount);
+  const myuPrice = myuPriceRaw * BigInt(mintAmount);
+  const degenPrice = degenPriceRaw * BigInt(mintAmount);
 
-  // Allowance checks (using wagmi hooks, cast as bigint)
+  // Read ERC20 allowance for MYU and DEGEN
   const { data: myuAllowanceRaw } = useReadContract({
     abi: ERC20_ABI,
     address: TOKENS.MYU.address as `0x${string}`,
@@ -78,9 +65,8 @@ export default function MintWidget() {
 
   const myuAllowance: bigint = typeof myuAllowanceRaw === "bigint" ? myuAllowanceRaw : 0n;
   const degenAllowance: bigint = typeof degenAllowanceRaw === "bigint" ? degenAllowanceRaw : 0n;
-
-  const needsMyuApproval = myuAllowance < MYU_PRICE;
-  const needsDegenApproval = degenAllowance < DEGEN_PRICE;
+  const needsMyuApproval = myuAllowance < myuPrice;
+  const needsDegenApproval = degenAllowance < degenPrice;
 
   // Approve & mint hooks
   const { writeContract: writeApproveMyu, isPending: isMyuApproving } = useWriteContract();
@@ -89,13 +75,13 @@ export default function MintWidget() {
   const { writeContract: writeMintMyu, isPending: isMintMyu } = useWriteContract();
   const { writeContract: writeMintDegen, isPending: isMintDegen } = useWriteContract();
 
-  // --- Simulation hooks ---
+  // Simulate contract calls for error handling
   const { data: canMintEth, error: mintEthSimError } = useSimulateContract({
     abi: NFT_ABI,
     address: CONTRACT_ADDRESS,
     functionName: "mintWithEth",
     args: [mintAmount],
-    value: ETH_PRICE,
+    value: ethPrice,
     query: { enabled: !!address && mintAmount > 0 },
   });
   const { data: canMintMyu, error: mintMyuSimError } = useSimulateContract({
@@ -122,14 +108,10 @@ export default function MintWidget() {
         address: CONTRACT_ADDRESS,
         functionName: "mintWithEth",
         args: [mintAmount],
-        value: ETH_PRICE,
+        value: ethPrice,
       });
     } catch (e: unknown) {
-      if (e && typeof e === "object" && "message" in e && typeof (e as { message?: unknown }).message === "string") {
-        setError((e as { message: string }).message);
-      } else {
-        setError("Failed to mint with ETH");
-      }
+      setError(e instanceof Error ? e.message : "Failed to mint with ETH");
     }
   }
   function handleMintMyu() {
@@ -142,11 +124,7 @@ export default function MintWidget() {
         args: [mintAmount],
       });
     } catch (e: unknown) {
-      if (e && typeof e === "object" && "message" in e && typeof (e as { message?: unknown }).message === "string") {
-        setError((e as { message: string }).message);
-      } else {
-        setError("Failed to mint with MYU");
-      }
+      setError(e instanceof Error ? e.message : "Failed to mint with MYU");
     }
   }
   function handleMintDegen() {
@@ -159,11 +137,7 @@ export default function MintWidget() {
         args: [mintAmount],
       });
     } catch (e: unknown) {
-      if (e && typeof e === "object" && "message" in e && typeof (e as { message?: unknown }).message === "string") {
-        setError((e as { message: string }).message);
-      } else {
-        setError("Failed to mint with DEGEN");
-      }
+      setError(e instanceof Error ? e.message : "Failed to mint with DEGEN");
     }
   }
   function handleApproveMyu() {
@@ -173,14 +147,10 @@ export default function MintWidget() {
         abi: ERC20_ABI,
         address: TOKENS.MYU.address as `0x${string}`,
         functionName: "approve",
-        args: [CONTRACT_ADDRESS, MYU_PRICE],
+        args: [CONTRACT_ADDRESS, myuPrice],
       });
     } catch (e: unknown) {
-      if (e && typeof e === "object" && "message" in e && typeof (e as { message?: unknown }).message === "string") {
-        setError((e as { message: string }).message);
-      } else {
-        setError("Failed to approve MYU");
-      }
+      setError(e instanceof Error ? e.message : "Failed to approve MYU");
     }
   }
   function handleApproveDegen() {
@@ -190,24 +160,15 @@ export default function MintWidget() {
         abi: ERC20_ABI,
         address: TOKENS.DEGEN.address as `0x${string}`,
         functionName: "approve",
-        args: [CONTRACT_ADDRESS, DEGEN_PRICE],
+        args: [CONTRACT_ADDRESS, degenPrice],
       });
     } catch (e: unknown) {
-      if (e && typeof e === "object" && "message" in e && typeof (e as { message?: unknown }).message === "string") {
-        setError((e as { message: string }).message);
-      } else {
-        setError("Failed to approve DEGEN");
-      }
+      setError(e instanceof Error ? e.message : "Failed to approve DEGEN");
     }
   }
 
   // --- Loading state for contract reads ---
-  const isLoading =
-    isMintedLoading ||
-    isMaxSupplyLoading ||
-    isRemainingLoading ||
-    isTierLoading ||
-    isUserMintsLoading;
+  const isLoading = isMintInfoLoading;
 
   // --- Render ---
   return (
@@ -218,16 +179,16 @@ export default function MintWidget() {
       ) : (
         <>
           <div className="mb-2">
-            <strong>Minted:</strong> {minted}/{maxSupply}
+            <strong>Minted:</strong> {Number(totalMinted)}/{Number(maxSupply)}
           </div>
           <div className="mb-2">
-            <strong>Your Mints:</strong> {userMints}/501
+            <strong>Your Mints:</strong> {Number(userMints)}/501
           </div>
           <div className="mb-2">
-            <strong>Remaining:</strong> {remaining}
+            <strong>Remaining:</strong> {Number(remainingMints)}
           </div>
           <div className="mb-2">
-            <strong>Current Tier:</strong> {currentTier}
+            <strong>Current Tier:</strong> {Number(currentTierNum)}
           </div>
         </>
       )}
@@ -249,7 +210,7 @@ export default function MintWidget() {
         </select>
       </div>
       <div className="mb-4">
-        <strong>ETH Price:</strong> {formatTokenAmount(ETH_PRICE, TOKENS.ETH.decimals)} ETH
+        <strong>ETH Price:</strong> {formatEther(ethPrice)} ETH
       </div>
       {mintEthSimError && (
         <div className="text-red-600 mb-2">Simulation failed: {mintEthSimError.message}</div>
@@ -264,7 +225,7 @@ export default function MintWidget() {
       </Button>
 
       <div className="mt-4 mb-1">
-        <strong>MYU Price:</strong> {formatTokenAmount(MYU_PRICE, TOKENS.MYU.decimals)} MYU
+        <strong>MYU Price:</strong> {formatUnits(myuPrice, TOKENS.MYU.decimals)} MYU
       </div>
       {needsMyuApproval ? (
         <Button
@@ -291,7 +252,7 @@ export default function MintWidget() {
         </>
       )}
       <div className="mt-4 mb-1">
-        <strong>DEGEN Price:</strong> {formatTokenAmount(DEGEN_PRICE, TOKENS.DEGEN.decimals)} DEGEN
+        <strong>DEGEN Price:</strong> {formatUnits(degenPrice, TOKENS.DEGEN.decimals)} DEGEN
       </div>
       {needsDegenApproval ? (
         <Button
@@ -316,6 +277,12 @@ export default function MintWidget() {
             {isMintDegen ? "Minting..." : "Mint with DEGEN"}
           </Button>
         </>
+      )}
+      {/* Optional: Network guardrail */}
+      {chain && chain.id !== 8453 && (
+        <div className="mt-4 text-yellow-500">
+          You are not connected to Base! Please switch network in your wallet.
+        </div>
       )}
     </div>
   );
