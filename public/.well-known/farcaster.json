@@ -1,0 +1,31 @@
+{
+  "accountAssociation": {
+    "header": process.env.FARCASTER_HEADER,
+    "payload": process.env.FARCASTER_PAYLOAD,
+    "signature": process.env.FARCASTER_SIGNATURE
+},
+  "frame": {
+    "version": "1",
+    "name": "Myceliyou Myutruvian Mint",
+    "iconUrl": "https://myu.schmidtiest.xyz/icon.png",
+    "homeUrl": "https://myu.schmidtiest.xyz",
+    "imageUrl": "https://myu.schmidtiest.xyz/image.png",
+    "buttonTitle": "digIn",
+    "splashImageUrl": "https://myu.schmidtiest.xyz/splash.png",
+    "splashBackgroundColor": "#39ff14",
+    "webhookUrl": "https://myu.schmidtiest.xyz/api/webhook",
+    "subtitle": "mint, buy, lurk",
+    "description": "Experience the culture & capacity of Myceliyou",
+    "primaryCategory": "utility",
+    "tags": [
+      "minting",
+      "community",
+      "whitepaper",
+      "token",
+      "nft"
+    ],
+    "tagline": "Mint to burn and support",
+    "ogTitle": "Myceliyou - The Empire",
+    "ogDescription": "Get updates on myceliyou, wally, schmrdty and more"
+  }
+}
