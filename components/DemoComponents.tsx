@@ -2,26 +2,54 @@
 
 "use client";
 
-import { type ReactNode, useCallback, useMemo } from "react";
-import { useAccount } from "wagmi";
-import {
-  Transaction,
-  TransactionButton,
-  TransactionToast,
-  TransactionToastAction,
-  TransactionToastIcon,
-  TransactionToastLabel,
-  TransactionError,
-  TransactionResponse,
-  TransactionStatusAction,
-  TransactionStatusLabel,
-  TransactionStatus,
-} from "@coinbase/onchainkit/transaction";
-import { useNotification } from "@coinbase/onchainkit/minikit";
+import { type ReactNode, useState } from "react";
 
-/**
- * Button: Now uses 'btn-cyber' and cyberpunk style.
- */
+// Theme toggle icons
+export function MushroomIcon({ size = 24, className = "" }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <ellipse cx="16" cy="16" rx="13" ry="6" fill="#ff2c8f" />
+      <ellipse cx="16" cy="12" rx="14" ry="9" fill="#ffdc46" />
+      <ellipse cx="16" cy="12" rx="13" ry="8" fill="#46f4ff" />
+      <ellipse cx="16" cy="13.2" rx="8" ry="4.2" fill="#fff" opacity="0.8" />
+      <rect x="12" y="16" width="8" height="10" rx="4" fill="#fff" />
+      <ellipse cx="16" cy="28" rx="3" ry="1.5" fill="#d1d5db" />
+    </svg>
+  );
+}
+export function CyberSunIcon({ size = 24, className = "" }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="16" cy="16" r="8" fill="#ffdc46" />
+      <circle cx="16" cy="16" r="6" fill="#46f4ff" />
+      <g stroke="#ff2c8f" strokeWidth="2">
+        <line x1="16" y1="2" x2="16" y2="8" />
+        <line x1="16" y1="24" x2="16" y2="30" />
+        <line x1="2" y1="16" x2="8" y2="16" />
+        <line x1="24" y1="16" x2="30" y2="16" />
+        <line x1="6" y1="6" x2="11" y2="11" />
+        <line x1="21" y1="21" x2="26" y2="26" />
+        <line x1="21" y1="11" x2="26" y2="6" />
+        <line x1="6" y1="26" x2="11" y2="21" />
+      </g>
+    </svg>
+  );
+}
+
 type ButtonProps = {
   children: ReactNode;
   variant?: "primary" | "secondary" | "outline" | "ghost";
@@ -42,7 +70,6 @@ export function Button({
   type = "button",
   icon,
 }: ButtonProps) {
-  // Variant and size are for optional extra classes, but btn-cyber is for cyberpunk!
   const sizeClasses = {
     sm: "text-xs px-2.5 py-1.5",
     md: "text-sm px-4 py-2",
@@ -93,52 +120,6 @@ function Card({
       )}
       {children}
     </div>
-  );
-}
-
-// SVG Mushroom and Sun/Cyber icons for theme toggling
-export function MushroomIcon({ size = 24, className = "" }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 32 32"
-      fill="none"
-      className={className}
-      aria-hidden="true"
-    >
-      <ellipse cx="16" cy="16" rx="13" ry="6" fill="#ff2c8f" />
-      <ellipse cx="16" cy="12" rx="14" ry="9" fill="#ffdc46" />
-      <ellipse cx="16" cy="12" rx="13" ry="8" fill="#46f4ff" />
-      <ellipse cx="16" cy="13.2" rx="8" ry="4.2" fill="#fff" opacity="0.8" />
-      <rect x="12" y="16" width="8" height="10" rx="4" fill="#fff" />
-      <ellipse cx="16" cy="28" rx="3" ry="1.5" fill="#d1d5db" />
-    </svg>
-  );
-}
-export function CyberSunIcon({ size = 24, className = "" }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 32 32"
-      fill="none"
-      className={className}
-      aria-hidden="true"
-    >
-      <circle cx="16" cy="16" r="8" fill="#ffdc46" />
-      <circle cx="16" cy="16" r="6" fill="#46f4ff" />
-      <g stroke="#ff2c8f" strokeWidth="2">
-        <line x1="16" y1="2" x2="16" y2="8" />
-        <line x1="16" y1="24" x2="16" y2="30" />
-        <line x1="2" y1="16" x2="8" y2="16" />
-        <line x1="24" y1="16" x2="30" y2="16" />
-        <line x1="6" y1="6" x2="11" y2="11" />
-        <line x1="21" y1="21" x2="26" y2="26" />
-        <line x1="21" y1="11" x2="26" y2="6" />
-        <line x1="6" y1="26" x2="11" y2="21" />
-      </g>
-    </svg>
   );
 }
 
@@ -252,31 +233,61 @@ export function Docs({ setActiveTab }: DocsProps) {
           <li className="flex items-start">
             <Icon name="check" className="text-cyber mt-1 mr-2" />
             <span>
-              White Paper: <a href="#" className="text-cyber hover:text-cyber-accent">Read Docs</a>
+              The Farcaster Channel:{" "}
+              <a
+                href="https://farcaster.xyz/~/channels/shenanigans"
+                className="text-cyber hover:text-cyber-accent"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Make some noise!
+              </a>
             </span>
           </li>
           <li className="flex items-start">
             <Icon name="check" className="text-cyber mt-1 mr-2" />
             <span>
-              GitHub: <a href="#" className="text-cyber hover:text-cyber-accent">View Code</a>
+              Contract:{" "}
+              <a
+                href="https://basescan.org/address/0xC80577C2C0e860fC2935c809609Fa46456cECC51"
+                className="text-cyber hover:text-cyber-accent"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Myutruvian
+              </a>
             </span>
           </li>
           <li className="flex items-start">
             <Icon name="check" className="text-cyber mt-1 mr-2" />
             <span>
-              Contract: <code className="text-cyber-accent">0xC80577...</code>
+              Contract:{" "}
+              <a
+                href="https://basescan.org/address/0x24c91E5E9eb13E72Db41EBC5816Af7f259647B07"
+                className="text-cyber hover:text-cyber-accent"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Myceliyou
+              </a>
             </span>
           </li>
           <li className="flex items-start">
             <Icon name="check" className="text-cyber mt-1 mr-2" />
             <span>
-              Farcaster: <a href="#" className="text-cyber hover:text-cyber-accent">/myutruvian</a>
+              White Paper:{" "}
+              <a
+                href="https://bafybeiaypnytrldfh6ks7qhz2s4dtoafisk5knz2zagt4oot7q45h3edve.ipfs.w3s.link/myceliyou.pdf"
+                className="text-cyber hover:text-cyber-accent"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                /Myceliyou
+              </a>
             </span>
           </li>
         </ul>
-        <Button onClick={() => setActiveTab("Main")}>
-          Back to Main
-        </Button>
+        <Button onClick={() => setActiveTab("Main")}>Back to Main</Button>
       </Card>
     </div>
   );
@@ -289,10 +300,8 @@ type MainProps = {
 export function Main({ setActiveTab }: MainProps) {
   return (
     <div className="space-y-6 animate-fade-in">
-      <Card title="Myceliyou Mini App">
-        <p className="mb-4">
-          Welcome to the Myceliyou Empire - built on base and expanding!
-        </p>
+      <Card title="The Myceliyou Empire">
+        <p className="mb-4">Built on base and expanding!</p>
         <Button
           onClick={() => setActiveTab("docs")}
           icon={<Icon name="arrow-right" size="sm" />}
@@ -300,177 +309,112 @@ export function Main({ setActiveTab }: MainProps) {
           Explore Docs
         </Button>
       </Card>
-      <TodoList />
+      <ChecklistCard />
       <TransactionCard />
     </div>
   );
 }
 
-// ✅ -- TodoList is now defined and included directly here.
-import { useState } from "react";
-
-type Todo = {
-  id: number;
-  text: string;
-  completed: boolean;
-};
-
-function TodoList() {
-  const [todos, setTodos] = useState<Todo[]>([
+// Minimal static checklist (no add, no input)
+function ChecklistCard() {
+  const [todos, setTodos] = useState([
     { id: 1, text: "Read about Myceliyou", completed: false },
     { id: 2, text: "Mint some NFTs", completed: false },
     { id: 3, text: "Buy $MYU", completed: false },
     { id: 4, text: "Share on Farcaster", completed: false },
   ]);
-  const [newTodo, setNewTodo] = useState("");
-
-  const addTodo = () => {
-    if (newTodo.trim() === "") return;
-
-    const newId =
-      todos.length > 0 ? Math.max(...todos.map((t) => t.id)) + 1 : 1;
-    setTodos([...todos, { id: newId, text: newTodo, completed: false }]);
-    setNewTodo("");
-  };
-
-  const toggleTodo = (id: number) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo,
-      ),
+  const toggleTodo = (id: number) =>
+    setTodos(todos =>
+      todos.map(todo =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      )
     );
-  };
-
-  const deleteTodo = (id: number) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      addTodo();
-    }
-  };
+  const deleteTodo = (id: number) =>
+    setTodos(todos => todos.filter(todo => todo.id !== id));
 
   return (
     <Card title="Get started">
-      <div className="space-y-4">
-        <div className="flex items-center space-x-2">
-          <input
-            type="text"
-            value={newTodo}
-            onChange={(e) => setNewTodo(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Add a new task..."
-            className="input-field flex-1"
-          />
-          <Button
-            size="md"
-            onClick={addTodo}
-            icon={<Icon name="plus" size="sm" />}
-          >
-            Add
-          </Button>
-        </div>
-
-        <ul className="space-y-2">
-          {todos.map((todo) => (
-            <li key={todo.id} className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <button
-                  type="button"
-                  id={`todo-${todo.id}`}
-                  onClick={() => toggleTodo(todo.id)}
-                  className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                    todo.completed
-                      ? "bg-[var(--cyber-primary)] border-[var(--cyber-primary)]"
-                      : "border-[var(--cyber-text-main)] bg-transparent"
-                  }`}
-                >
-                  {todo.completed && (
-                    <Icon
-                      name="check"
-                      size="sm"
-                      className="text-[var(--cyber-bg)]"
-                    />
-                  )}
-                </button>
-                <label
-                  htmlFor={`todo-${todo.id}`}
-                  className={`text-cyber cursor-pointer ${todo.completed ? "line-through opacity-70" : ""}`}
-                >
-                  {todo.text}
-                </label>
-              </div>
+      <ul className="space-y-2">
+        {todos.map((todo) => (
+          <li key={todo.id} className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
               <button
                 type="button"
-                onClick={() => deleteTodo(todo.id)}
-                className="text-cyber hover:text-cyber-accent text-xl"
+                id={`todo-${todo.id}`}
+                onClick={() => toggleTodo(todo.id)}
+                className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                  todo.completed
+                    ? "bg-[var(--cyber-primary)] border-[var(--cyber-primary)]"
+                    : "border-[var(--cyber-text-main)] bg-transparent"
+                }`}
               >
-                ×
+                {todo.completed && (
+                  <Icon
+                    name="check"
+                    size="sm"
+                    className="text-[var(--cyber-bg)]"
+                  />
+                )}
               </button>
-            </li>
-          ))}
-        </ul>
-      </div>
+              <label
+                htmlFor={`todo-${todo.id}`}
+                className={`text-cyber cursor-pointer ${todo.completed ? "line-through opacity-70" : ""}`}
+              >
+                {todo.text}
+              </label>
+            </div>
+            <button
+              type="button"
+              onClick={() => deleteTodo(todo.id)}
+              className="text-cyber hover:text-cyber-accent text-xl"
+            >
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
     </Card>
   );
 }
 
+// Share on Farcaster button (mobile aware)
 function TransactionCard() {
-  const { address } = useAccount();
-  const calls = useMemo(() => address
-    ? [{ to: address, data: "0x" as `0x${string}`, value: BigInt(0) }]
-    : [], [address]);
-  const sendNotification = useNotification();
-  const handleSuccess = useCallback(async (response: TransactionResponse) => {
-    const transactionHash = response.transactionReceipts[0].transactionHash;
-    await sendNotification({
-      title: "Congratulations!",
-      body: `Transaction successful: ${transactionHash}!`,
-    });
-  }, [sendNotification]);
+  const isMobile =
+    typeof window !== "undefined" &&
+    /Mobi|Android/i.test(window.navigator.userAgent);
+
+  const farcasterUrl =
+    "https://warpcast.com/~/compose?text=" +
+    encodeURIComponent("I just minted a Myutruvian NFT on Base! 🍄 myu.schmidtiest.xyz");
+
+  function handleShare() {
+    if (isMobile) {
+      window.location.href = farcasterUrl;
+    } else {
+      window.open(farcasterUrl, "_blank");
+    }
+  }
+
   return (
-    <Card title="Yo thanks for minting!">
-      <div className="space-y-4">
-        <p className="mb-4">
-          The Myutruvian experience is brought to you by{" "}
-          <a
-            href="https://app.ens.domains/name/schmidtiest.eth"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-cyber hover:text-cyber-accent"
-          >
-            schmidtiest.eth
-          </a>
-          .
-        </p>
-        <div className="flex flex-col items-center">
-          {address ? (
-            <Transaction
-              calls={calls}
-              onSuccess={handleSuccess}
-              onError={(error: TransactionError) =>
-                console.error("Transaction failed:", error)
-              }
-            >
-              <TransactionButton className="text-white text-md" />
-              <TransactionStatus>
-                <TransactionStatusAction />
-                <TransactionStatusLabel />
-              </TransactionStatus>
-              <TransactionToast className="mb-4">
-                <TransactionToastIcon />
-                <TransactionToastLabel />
-                <TransactionToastAction />
-              </TransactionToast>
-            </Transaction>
-          ) : (
-            <p className="text-cyber-accent text-md text-center mt-4">
-              Connect your wallet to make the magic happen!
-            </p>
-          )}
-        </div>
+    <div className="card">
+      <div className="mb-2">
+        The Myutruvian experience is brought to you by{" "}
+        <a
+          href="https://schmidtiest.eth"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-cyber"
+        >
+          schmidtiest.eth
+        </a>
+        .
       </div>
-    </Card>
+      <Button size="lg" onClick={handleShare} className="w-full">
+        Share on Farcaster
+      </Button>
+    </div>
   );
 }
+
+// Export TransactionCard for direct use
+export { TransactionCard };

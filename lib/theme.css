@@ -4,29 +4,38 @@
 @tailwind utilities;
 
 /* Cyberpunk + Mycelium + Tron + Clean inspired styles */
+/* ---- LIGHT MODE: your current cyberpunk theme ---- */
 :root {
   --cyber-primary: #46f4ff;
   --cyber-accent: #ffdc46;
   --cyber-danger: #ff2c8f;
-  --cyber-bg: #181a2b;
-  --cyber-bg-light: #202334;
-  --cyber-glass: rgba(30,40,60,0.7);
+  --cyber-bg: #f8fafc;
+  --cyber-bg-light: #eaf6fa;
+  --cyber-glass: rgba(244,249,255,0.7);
   --cyber-neon: 0 0 8px #46f4ff, 0 0 16px #ff2c8f;
   --cyber-font: 'Inter', 'SF Pro', 'Roboto', 'sans-serif';
-  --cyber-text-main: #eaf6fa;
-  --cyber-text-muted: #9ca4ba;
-  --cyber-border: #2d3144;
+  --cyber-text-main: #252a34;
+  --cyber-text-muted: #6b7280;
+  --cyber-border: #b3b7c9;
   --cyber-card-bg: var(--cyber-glass);
-  --cyber-card-border: #222c;
+  --cyber-card-border: #b3b7c9;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --cyber-bg: #12121a;
-    --cyber-bg-light: #181a2b;
-    --cyber-text-main: #eaf6fa;
-    --cyber-glass: rgba(18,22,32,0.85);
-  }
+/* ---- DARK MODE: mycelium/mushroom, .dark class on <html> ---- */
+.dark {
+  --cyber-primary: #7fffd4;
+  --cyber-accent: #ff90c2;
+  --cyber-danger: #e96479;
+  --cyber-bg: #18181b;
+  --cyber-bg-light: #23232c;
+  --cyber-glass: rgba(30,40,60,0.82);
+  --cyber-neon: 0 0 12px #7fffd4cc, 0 0 24px #ff90c2cc;
+  --cyber-font: 'Inter', 'SF Pro', 'Roboto', 'sans-serif';
+  --cyber-text-main: #f6f6ea;
+  --cyber-text-muted: #c4c4b9;
+  --cyber-border: #444a5a;
+  --cyber-card-bg: linear-gradient(135deg, #23232c 0%, #18181b 60%, #212d2a 100%);
+  --cyber-card-border: #444a5a;
 }
 
 body {
@@ -36,7 +45,7 @@ body {
   font-size: 1.17rem;
   min-height: 100vh;
   margin: 0;
-  transition: background 0.3s, color 0.3s;
+  transition: background 0.4s, color 0.3s;
 }
 
 h1, h2, h3, h4 {
@@ -64,6 +73,8 @@ main {
   min-width: 320px;
   color: var(--cyber-text-main);
   text-align: center;
+  border: 2px solid var(--cyber-card-border);
+  transition: background 0.5s, color 0.3s, box-shadow 0.4s;
 }
 
 .text-cyber { color: var(--cyber-primary); }
@@ -80,20 +91,20 @@ main {
 
 .cyberpunk {
   font-weight: 800;
-  text-shadow: 0 0 12px #46f4ffcc, 0 0 24px #ff2c8fcc;
+  text-shadow: var(--cyber-neon);
   color: var(--cyber-primary);
   letter-spacing: 0.07em;
 }
 
 .btn-cyber {
-  background: linear-gradient(90deg, #1e71b8 0%, #46f4ff 100%);
+  background: linear-gradient(90deg, #1e71b8 0%, var(--cyber-primary) 100%);
   color: #111;
   border-radius: 1.5em;
   padding: 0.85em 2.2em;
   font-weight: 700;
   letter-spacing: 0.02em;
   font-size: 1.17rem;
-  box-shadow: 0 0 8px #46f4ff;
+  box-shadow: 0 0 8px var(--cyber-primary);
   outline: none;
   border: none;
   cursor: pointer;
@@ -101,8 +112,8 @@ main {
   transition: background 0.2s, box-shadow 0.2s, color 0.2s;
 }
 .btn-cyber:hover, .btn-cyber:focus-visible {
-  background: linear-gradient(90deg, #46f4ff 0%, #ff2c8f 100%);
-  box-shadow: 0 0 12px #ffdc46, 0 0 24px #46f4ff;
+  background: linear-gradient(90deg, var(--cyber-primary) 0%, var(--cyber-accent) 100%);
+  box-shadow: 0 0 12px var(--cyber-accent), 0 0 24px var(--cyber-primary);
   color: #fff;
 }
 
