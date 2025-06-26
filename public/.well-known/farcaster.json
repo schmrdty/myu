@@ -1,6 +1,6 @@
 {
   "frame": {
-    "name": "Myceliyou",
+    "name": "Myutruvian NFT",
     "version": "1",
     "iconUrl": "https://myu.schmidtiest.xyz/myu.png",
     "homeUrl": "https://myu.schmidtiest.xyz",
@@ -9,7 +9,7 @@
     "splashImageUrl": "https://myu.schmidtiest.xyz/myu1k.png",
     "splashBackgroundColor": "#39ff14",
     "webhookUrl": "https://myu.schmidtiest.xyz/api/webhook",
-    "subtitle": "Mint, peep & learn",
+    "subtitle": "Mint peep grow",
     "description": "buy myu, mint myutruvian, enjoyy",
     "primaryCategory": "utility",
     "heroImageUrl": "https://myu.schmidtiest.xyz/myu.png",
