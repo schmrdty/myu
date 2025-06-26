@@ -2,9 +2,7 @@
 
 import { useState, useEffect } from "react";
 import {
-  useAppKitAccount,
-} from "@reown/appkit/react";
-import {
+  useAccount,
   useReadContract,
   useWriteContract,
   useSimulateContract,
@@ -15,7 +13,8 @@ import { CONTRACT_ADDRESS, NFT_ABI, TOKENS, ERC20_ABI } from "@/lib/constants";
 import { Button } from "@/components/DemoComponents";
 
 const MINT_OPTIONS = [1, 5, 10, 20, 50, 100, 500];
-
+const { address, isConnected, chain } = useAccount();
+const isBase = chain?.id === 8453;
 function formatTokenDisplay(amount: bigint, decimals: number, decimalsToShow = 0) {
   const value = Number(formatUnits(amount, decimals));
   return value.toLocaleString(undefined, {
@@ -25,20 +24,22 @@ function formatTokenDisplay(amount: bigint, decimals: number, decimalsToShow = 0
 }
 
 export default function MintWidget() {
-  const { address, isConnected } = useAppKitAccount(); // ✅ Use AppKit for wallet
+  // ⏺️ Use Coinbase/OnchainKit: wagmi hooks for account/chain
+  const { address, chain, isConnected } = useAccount();
+
   const [mintAmount, setMintAmount] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [chainError, setChainError] = useState<string | null>(null);
 
   // Chain validation & autoswitch
-  const { switchChain, chain, isPending: isSwitching } = useSwitchChain();
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
 
   useEffect(() => {
     if (!isConnected) {
       setChainError("Connect your wallet to mint!");
       return;
     }
-    if (chain?.id === 8453) {
+    if (isBase) {
       setChainError(null);
     } else if (chain && chain.id !== 8453) {
       setChainError("Myutruvian is only on base... for now! Switch to base chain to mint.");
@@ -56,7 +57,7 @@ export default function MintWidget() {
     address: CONTRACT_ADDRESS,
     functionName: "getMintInfo",
     args: [address ?? "0x0000000000000000000000000000000000000000"],
-    query: { enabled: isConnected && chain?.id === 8453 },
+    query: { enabled: isConnected && isBase },
   });
 
   // Parse and guard contract return
@@ -86,14 +87,18 @@ export default function MintWidget() {
     address: TOKENS.MYU.address as `0x${string}`,
     functionName: "allowance",
     args: [address ?? "0x0", CONTRACT_ADDRESS],
-    query: { enabled: !!address && chain?.id === 8453 },
+    query: {
+      enabled: !!address && isConnected && isBase,
+    },
   });
   const { data: degenAllowanceRaw } = useReadContract({
     abi: ERC20_ABI,
     address: TOKENS.DEGEN.address as `0x${string}`,
     functionName: "allowance",
     args: [address ?? "0x0", CONTRACT_ADDRESS],
-    query: { enabled: !!address && chain?.id === 8453 },
+    query: {
+      enabled: !!address && isConnected && isBase,
+    },
   });
 
   const myuAllowance: bigint = typeof myuAllowanceRaw === "bigint" ? myuAllowanceRaw : 0n;
@@ -102,34 +107,34 @@ export default function MintWidget() {
   const needsDegenApproval = degenAllowance < degenPrice;
 
   // Approve & mint hooks
-  const { writeContract: writeApproveMyu, isPending: isMyuApproving } = useWriteContract();
-  const { writeContract: writeApproveDegen, isPending: isDegenApproving } = useWriteContract();
-  const { writeContract: writeMintEth, isPending: isMintEth } = useWriteContract();
-  const { writeContract: writeMintMyu, isPending: isMintMyu } = useWriteContract();
-  const { writeContract: writeMintDegen, isPending: isMintDegen } = useWriteContract();
+  const { isBase, writeContract: writeApproveMyu, isPending: isMyuApproving } = useWriteContract();
+  const { isBase, writeContract: writeApproveDegen, isPending: isDegenApproving } = useWriteContract();
+  const { isBase, writeContract: writeMintEth, isPending: isMintEth } = useWriteContract();
+  const { isBase, writeContract: writeMintMyu, isPending: isMintMyu } = useWriteContract();
+  const { isBase, writeContract: writeMintDegen, isPending: isMintDegen } = useWriteContract();
 
   // Simulate contract calls for error handling (only enabled if on Base)
-  const { data: canMintEth, error: mintEthSimError } = useSimulateContract({
+  const { isBase, data: canMintEth, error: mintEthSimError } = useSimulateContract({
     abi: NFT_ABI,
     address: CONTRACT_ADDRESS,
     functionName: "mintWithEth",
     args: [mintAmount],
     value: ethPrice,
-    query: { enabled: !!address && mintAmount > 0 && chain?.id === 8453 },
+    query: { enabled: !!address && mintAmount > 0 && isBase },
   });
   const { data: canMintMyu, error: mintMyuSimError } = useSimulateContract({
     abi: NFT_ABI,
     address: CONTRACT_ADDRESS,
     functionName: "mintWithMyu",
     args: [mintAmount],
-    query: { enabled: !!address && mintAmount > 0 && !needsMyuApproval && chain?.id === 8453 },
+    query: { enabled: !!address && mintAmount > 0 && !needsMyuApproval && isBase },
   });
   const { data: canMintDegen, error: mintDegenSimError } = useSimulateContract({
     abi: NFT_ABI,
     address: CONTRACT_ADDRESS,
     functionName: "mintWithDegen",
     args: [mintAmount],
-    query: { enabled: !!address && mintAmount > 0 && !needsDegenApproval && chain?.id === 8453 },
+    query: { enabled: !!address && mintAmount > 0 && !needsDegenApproval && isBase },
   });
 
   // --- Handlers ---
@@ -300,7 +305,7 @@ export default function MintWidget() {
             ? "Switching..."
             : `Mint with ETH (${formatEther(ethPrice)} ETH)`}
         </Button>
-        {mintEthSimError && chain?.id === 8453 && isConnected && (
+        {mintEthSimError && isBase && isConnected && (
           <div className="text-red-600 mb-2 text-xs">{mintEthSimError.message}</div>
         )}
       </div>
@@ -339,7 +344,7 @@ export default function MintWidget() {
               : `Mint with MYU (${formatTokenDisplay(myuPrice, TOKENS.MYU.decimals, 0)} MYU)`}
           </Button>
         )}
-        {mintMyuSimError && chain?.id === 8453 && isConnected && (
+        {mintMyuSimError && isBase && isConnected && (
           <div className="text-red-600 mb-2 text-xs">{mintMyuSimError.message}</div>
         )}
       </div>
@@ -378,7 +383,7 @@ export default function MintWidget() {
               : `Mint with DEGEN (${formatTokenDisplay(degenPrice, TOKENS.DEGEN.decimals, 0)} DEGEN)`}
           </Button>
         )}
-        {mintDegenSimError && chain?.id === 8453 && isConnected && (
+        {mintDegenSimError && isBase && isConnected && (
           <div className="text-red-600 mb-2 text-xs">{mintDegenSimError.message}</div>
         )}
       </div>

@@ -223,3 +223,9 @@ input[type="radio"], input[type="checkbox"] {
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;
 }
+
+.wallet-modal {
+  position: absolute;
+  min-width: 200px;
+  box-shadow: 0 0 12px var(--cyber-accent), 0 0 24px var(--cyber-primary);
+}
