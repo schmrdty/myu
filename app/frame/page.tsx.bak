@@ -1,0 +1,23 @@
+// Location: /app/frame/page.tsx
+
+import { Frame } from "@/components/Frame";
+import { MintFrameButton } from "@/components/MintFrameButton";
+import { QRCode } from "qrcode.react";
+
+const FRAME_URL = "https://myu.schmidtiest.xyz/api/frame";
+
+export default function FrameLandingPage() {
+  return (
+    <Frame>
+      <h1 className="cyberpunk text-3xl mb-5">Mint via Farcaster Frame</h1>
+      <p className="mb-4 text-lg text-muted">
+        Open this Frame in Farcaster or scan below to mint your NFT on Base.
+      </p>
+      <div className="mb-6 flex flex-col items-center gap-2">
+        <QRCode value={FRAME_URL} size={164} />
+        <span className="text-sm text-muted">Scan with Farcaster</span>
+      </div>
+      <MintFrameButton />
+    </Frame>
+  );
+}
