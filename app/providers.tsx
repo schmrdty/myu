@@ -1,7 +1,3 @@
-// Location: /app/providers.tsx
-
-"use client";
-
 import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { base } from "wagmi/chains";

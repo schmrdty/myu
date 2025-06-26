@@ -1,44 +1,23 @@
 // Location: /app/providers.tsx
 
 "use client";
-
-import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AppKit } from "@reown/appkit/react";
+import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import { base } from "wagmi/chains";
-import { WagmiProvider } from "wagmi";
-import { getConfig } from "@/lib/wagmi";
-import { CryptoPolyfill } from "@/components/CryptoPolyfill";
-import dynamic from "next/dynamic";
 import { ReactNode } from "react";
-
-// Dynamically import MiniKitProvider to avoid SSR issues
-const MiniKitProvider = dynamic(
-  () => import("@coinbase/onchainkit/minikit").then((mod) => mod.MiniKitProvider),
-  { ssr: false }
-);
 
 const queryClient = new QueryClient();
 
 export function Providers({ children }: { children: ReactNode }) {
-  const apiKey = process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY;
-  
-  if (!apiKey || apiKey === "your-api-key") {
-    console.error("Please set a valid NEXT_PUBLIC_ONCHAINKIT_API_KEY in your .env.local file");
-  }
-
   return (
-    <WagmiProvider config={getConfig()}>
+    <AppKit
+      adapter={new WagmiAdapter({ chains: [base] })}
+      projectId={process.env.NEXT_PUBLIC_REOWN_PROJECT_ID!}
+    >
       <QueryClientProvider client={queryClient}>
-        <OnchainKitProvider
-          apiKey={apiKey || ""}
-          chain={base}
-        >
-          <MiniKitProvider>
-            <CryptoPolyfill />
-            {children}
-          </MiniKitProvider>
-        </OnchainKitProvider>
+        {children}
       </QueryClientProvider>
-    </WagmiProvider>
+    </AppKit>
   );
 }

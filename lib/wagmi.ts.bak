@@ -1,29 +1,30 @@
 // Location: /lib/wagmi.ts
 
 import { createConfig, http } from "wagmi";
-import { optimism, base, mainnet } from "wagmi/chains";
-import { coinbaseWallet, injected, walletConnect } from "wagmi/connectors";
+import { base } from "wagmi/chains";
+import { farcasterFrame } from "@farcaster/frame-wagmi-connector";
+import { coinbaseWallet, injected } from "wagmi/connectors";
 
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!;
+let config: ReturnType<typeof createConfig> | undefined;
 
 export function getConfig() {
-  return createConfig({
-    chains: [optimism, base, mainnet],
+  if (config) return config;
+
+  config = createConfig({
+    chains: [base],
     connectors: [
+      farcasterFrame(),
       injected(),
       coinbaseWallet({
         appName: "Myutruvian",
         preference: "smartWalletOnly",
       }),
-      walletConnect({
-        projectId: projectId || "dummy-project-id", // Fallback for build
-      }),
     ],
     transports: {
-      [base.id]: http(process.env.NEXT_PUBLIC_BASE_RPCURL || "https://mainnet.base.org"),
-      [mainnet.id]: http(process.env.NEXT_PUBLIC_ETH_RPCURL || "https://eth.llamarpc.com"),
-      [optimism.id]: http(process.env.NEXT_PUBLIC_OP_RPCURL || "https://mainnet.optimism.io"),
+      [base.id]: http(process.env.NEXT_PUBLIC_BASE_RPC_URL || "https://mainnet.base.org"),
     },
     ssr: true,
   });
+
+  return config;
 }

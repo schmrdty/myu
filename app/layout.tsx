@@ -1,10 +1,9 @@
 // Location: /app/layout.tsx
 
-import "@/lib/theme.css"; // Your custom theme
+import "@/lib/theme.css";
 import "@coinbase/onchainkit/styles.css";
 import type { Metadata, Viewport } from "next";
-import { Providers } from "./providers";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import ClientRoot from "./ClientRoot";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -12,7 +11,10 @@ export const viewport: Viewport = {
 };
 
 export async function generateMetadata(): Promise<Metadata> {
-  const URL = process.env.NEXT_PUBLIC_URL || process.env.NEXT_PUBLIC_HOST || "http://localhost:6969";
+  const URL =
+    process.env.NEXT_PUBLIC_URL ||
+    process.env.NEXT_PUBLIC_HOST ||
+    "http://localhost:6969";
   return {
     title: "Myutruvian - Web3 NFT Platform",
     description: "Mint your Myutruvian NFT on Base - A decentralized creative ecosystem",
@@ -35,17 +37,11 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className="bg-[var(--bg-color)]">
-        <ThemeProvider>
-          <Providers>{children}</Providers>
-        </ThemeProvider>
+        <ClientRoot>{children}</ClientRoot>
       </body>
     </html>
   );

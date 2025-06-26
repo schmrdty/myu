@@ -24,8 +24,6 @@ test/
 # misc
 .DS_Store
 *.pem
-.well-known/
-farcaster.json
 .idea
 
 
@@ -40,7 +38,8 @@ yarn-error.log
 .env.development.local
 .env.test.local
 .env.production.local
-
+.env.save
+.env.
 # Vercel
 .vercel
 
@@ -50,3 +49,4 @@ next-env.d.ts
 
 # Redis
 dump.rdb
+.bak

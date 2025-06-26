@@ -23,7 +23,9 @@ function formatTokenDisplay(amount: bigint, decimals: number, decimalsToShow = 0
 }
 
 export default function MintWidget() {
+  // ⏺️ Use Coinbase/OnchainKit: wagmi hooks for account/chain
   const { address, chain, isConnected } = useAccount();
+
   const [mintAmount, setMintAmount] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [chainError, setChainError] = useState<string | null>(null);

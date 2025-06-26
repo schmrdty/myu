@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import {
-  useAccount,
+  useAppKitAccount,
+} from "@reown/appkit/react";
+import {
   useReadContract,
   useWriteContract,
   useSimulateContract,
@@ -14,38 +16,50 @@ import { Button } from "@/components/DemoComponents";
 
 const MINT_OPTIONS = [1, 5, 10, 20, 50, 100, 500];
 
+function formatTokenDisplay(amount: bigint, decimals: number, decimalsToShow = 0) {
+  const value = Number(formatUnits(amount, decimals));
+  return value.toLocaleString(undefined, {
+    maximumFractionDigits: decimalsToShow,
+    minimumFractionDigits: decimalsToShow,
+  });
+}
+
 export default function MintWidget() {
-  const { address, chain } = useAccount();
+  const { address, isConnected } = useAppKitAccount(); // ✅ Use AppKit for wallet
   const [mintAmount, setMintAmount] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [chainError, setChainError] = useState<string | null>(null);
 
-  // Add switchChain hook
-  const { switchChain, isPending: isSwitching } = useSwitchChain();
+  // Chain validation & autoswitch
+  const { switchChain, chain, isPending: isSwitching } = useSwitchChain();
 
-  // ⏺️ Autoswitch to Base if not on 8453, set error if fails
   useEffect(() => {
-    if (chain && chain.id !== 8453 && switchChain) {
+    if (!isConnected) {
+      setChainError("Connect your wallet to mint!");
+      return;
+    }
+    if (chain?.id === 8453) {
+      setChainError(null);
+    } else if (chain && chain.id !== 8453) {
+      setChainError("Myutruvian is only on base... for now! Switch to base chain to mint.");
       try {
-        switchChain({ chainId: 8453 });
-      } catch (switchError) {
-        setError(
-          switchError instanceof Error
-            ? switchError.message
-            : "Failed to switch to Base. Please switch in your wallet."
-        );
+        switchChain?.({ chainId: 8453 });
+      } catch {
+        // Silent fail, show error only
       }
     }
-  }, [chain, switchChain]);
+  }, [chain, switchChain, isConnected]);
 
-  // ⏺️ Read all mint info from contract (single call for everything)
+  // Fetch live mint info from contract
   const { data: mintInfoRaw, isLoading: isMintInfoLoading } = useReadContract({
     abi: NFT_ABI,
     address: CONTRACT_ADDRESS,
     functionName: "getMintInfo",
     args: [address ?? "0x0000000000000000000000000000000000000000"],
+    query: { enabled: isConnected && chain?.id === 8453 },
   });
 
-  // Parse contract return (guard for undefined)
+  // Parse and guard contract return
   const [
     userMints,
     remainingMints,
@@ -61,7 +75,7 @@ export default function MintWidget() {
       ])
     : [0n, 0n, 0n, 0n, 0n, 0n, 0n, 0n];
 
-  // Prices per NFT (for current tier)
+  // Calculate total prices for the input amount
   const ethPrice = ethPriceRaw * BigInt(mintAmount);
   const myuPrice = myuPriceRaw * BigInt(mintAmount);
   const degenPrice = degenPriceRaw * BigInt(mintAmount);
@@ -72,14 +86,14 @@ export default function MintWidget() {
     address: TOKENS.MYU.address as `0x${string}`,
     functionName: "allowance",
     args: [address ?? "0x0", CONTRACT_ADDRESS],
-    query: { enabled: !!address },
+    query: { enabled: !!address && chain?.id === 8453 },
   });
   const { data: degenAllowanceRaw } = useReadContract({
     abi: ERC20_ABI,
     address: TOKENS.DEGEN.address as `0x${string}`,
     functionName: "allowance",
     args: [address ?? "0x0", CONTRACT_ADDRESS],
-    query: { enabled: !!address },
+    query: { enabled: !!address && chain?.id === 8453 },
   });
 
   const myuAllowance: bigint = typeof myuAllowanceRaw === "bigint" ? myuAllowanceRaw : 0n;
@@ -94,33 +108,41 @@ export default function MintWidget() {
   const { writeContract: writeMintMyu, isPending: isMintMyu } = useWriteContract();
   const { writeContract: writeMintDegen, isPending: isMintDegen } = useWriteContract();
 
-  // Simulate contract calls for error handling
+  // Simulate contract calls for error handling (only enabled if on Base)
   const { data: canMintEth, error: mintEthSimError } = useSimulateContract({
     abi: NFT_ABI,
     address: CONTRACT_ADDRESS,
     functionName: "mintWithEth",
     args: [mintAmount],
     value: ethPrice,
-    query: { enabled: !!address && mintAmount > 0 && chain && chain.id === 8453 },
+    query: { enabled: !!address && mintAmount > 0 && chain?.id === 8453 },
   });
   const { data: canMintMyu, error: mintMyuSimError } = useSimulateContract({
     abi: NFT_ABI,
     address: CONTRACT_ADDRESS,
     functionName: "mintWithMyu",
     args: [mintAmount],
-    query: { enabled: !!address && mintAmount > 0 && !needsMyuApproval && chain && chain.id === 8453 },
+    query: { enabled: !!address && mintAmount > 0 && !needsMyuApproval && chain?.id === 8453 },
   });
   const { data: canMintDegen, error: mintDegenSimError } = useSimulateContract({
     abi: NFT_ABI,
     address: CONTRACT_ADDRESS,
     functionName: "mintWithDegen",
     args: [mintAmount],
-    query: { enabled: !!address && mintAmount > 0 && !needsDegenApproval && chain && chain.id === 8453 },
+    query: { enabled: !!address && mintAmount > 0 && !needsDegenApproval && chain?.id === 8453 },
   });
 
   // --- Handlers ---
   function handleMintEth() {
     setError(null);
+    if (!isConnected) {
+      setChainError("Connect your wallet to mint!");
+      return;
+    }
+    if (chain?.id !== 8453) {
+      setChainError("Myutruvian is only on base... for now! Switch to base chain to mint.");
+      return;
+    }
     try {
       writeMintEth({
         abi: NFT_ABI,
@@ -135,6 +157,14 @@ export default function MintWidget() {
   }
   function handleMintMyu() {
     setError(null);
+    if (!isConnected) {
+      setChainError("Connect your wallet to mint!");
+      return;
+    }
+    if (chain?.id !== 8453) {
+      setChainError("Myutruvian is only on base... for now! Switch to base chain to mint.");
+      return;
+    }
     try {
       writeMintMyu({
         abi: NFT_ABI,
@@ -148,6 +178,14 @@ export default function MintWidget() {
   }
   function handleMintDegen() {
     setError(null);
+    if (!isConnected) {
+      setChainError("Connect your wallet to mint!");
+      return;
+    }
+    if (chain?.id !== 8453) {
+      setChainError("Myutruvian is only on base... for now! Switch to base chain to mint.");
+      return;
+    }
     try {
       writeMintDegen({
         abi: NFT_ABI,
@@ -161,6 +199,14 @@ export default function MintWidget() {
   }
   function handleApproveMyu() {
     setError(null);
+    if (!isConnected) {
+      setChainError("Connect your wallet to mint!");
+      return;
+    }
+    if (chain?.id !== 8453) {
+      setChainError("Myutruvian is only on base... for now! Switch to base chain to mint.");
+      return;
+    }
     try {
       writeApproveMyu({
         abi: ERC20_ABI,
@@ -174,6 +220,14 @@ export default function MintWidget() {
   }
   function handleApproveDegen() {
     setError(null);
+    if (!isConnected) {
+      setChainError("Connect your wallet to mint!");
+      return;
+    }
+    if (chain?.id !== 8453) {
+      setChainError("Myutruvian is only on base... for now! Switch to base chain to mint.");
+      return;
+    }
     try {
       writeApproveDegen({
         abi: ERC20_ABI,
@@ -186,10 +240,8 @@ export default function MintWidget() {
     }
   }
 
-  // --- Loading state for contract reads ---
   const isLoading = isMintInfoLoading;
 
-  // --- Render ---
   return (
     <div className="card" style={{ maxWidth: 420, margin: "0 auto" }}>
       <h2 className="cyberpunk text-2xl mb-4">Mint Myutruvian NFT</h2>
@@ -198,22 +250,22 @@ export default function MintWidget() {
       ) : (
         <>
           <div className="mb-2">
-            <strong>Minted:</strong> {Number(totalMinted)}/{Number(maxSupply)}
+            <strong>Minted:</strong> {Number(totalMinted).toLocaleString()}/{Number(maxSupply).toLocaleString()}
           </div>
           <div className="mb-2">
             <strong>Your Mints:</strong> {Number(userMints)}/501
           </div>
           <div className="mb-2">
-            <strong>Remaining:</strong> {Number(remainingMints)}
+            <strong>Remaining:</strong> {Number(remainingMints).toLocaleString()}
           </div>
           <div className="mb-2">
             <strong>Current Tier:</strong> {Number(currentTierNum)}
           </div>
         </>
       )}
-      {error && (
+      {(chainError || error) && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-3">
-          {error}
+          {chainError || error}
         </div>
       )}
       <div className="mb-4">
@@ -228,79 +280,116 @@ export default function MintWidget() {
           ))}
         </select>
       </div>
-      <div className="mb-4">
-        <strong>ETH Price:</strong> {formatEther(ethPrice)} ETH
-      </div>
-      {mintEthSimError && (
-        <div className="text-red-600 mb-2">Simulation failed: {mintEthSimError.message}</div>
-      )}
-      <Button
-        variant="primary"
-        size="lg"
-        onClick={handleMintEth}
-        disabled={isMintEth || !canMintEth || !!mintEthSimError || isLoading || (chain && chain.id !== 8453)}
-      >
-        {isMintEth ? "Minting..." : isSwitching ? "Switching..." : "Mint with ETH"}
-      </Button>
-
-      <div className="mt-4 mb-1">
-        <strong>MYU Price:</strong> {formatUnits(myuPrice, TOKENS.MYU.decimals)} MYU
-      </div>
-      {needsMyuApproval ? (
+      <div className="mb-2">
         <Button
-          variant="secondary"
-          size="md"
-          onClick={handleApproveMyu}
-          disabled={isMyuApproving || isLoading || (chain && chain.id !== 8453)}
+          variant="primary"
+          size="lg"
+          onClick={handleMintEth}
+          disabled={
+            isMintEth ||
+            !canMintEth ||
+            !!mintEthSimError ||
+            isLoading ||
+            chain?.id !== 8453 ||
+            !isConnected
+          }
         >
-          {isMyuApproving ? "Approving..." : isSwitching ? "Switching..." : "Approve MYU"}
+          {isMintEth
+            ? "Minting..."
+            : isSwitching
+            ? "Switching..."
+            : `Mint with ETH (${formatEther(ethPrice)} ETH)`}
         </Button>
-      ) : (
-        <>
-          {mintMyuSimError && (
-            <div className="text-red-600 mb-2">Simulation failed: {mintMyuSimError.message}</div>
-          )}
+        {mintEthSimError && chain?.id === 8453 && isConnected && (
+          <div className="text-red-600 mb-2 text-xs">{mintEthSimError.message}</div>
+        )}
+      </div>
+      <div className="mb-2">
+        {needsMyuApproval ? (
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={handleApproveMyu}
+            disabled={isMyuApproving || isLoading || chain?.id !== 8453 || !isConnected}
+          >
+            {isMyuApproving
+              ? "Approving..."
+              : isSwitching
+              ? "Switching..."
+              : `Approve MYU (${formatTokenDisplay(myuPrice, TOKENS.MYU.decimals, 0)} MYU)`}
+          </Button>
+        ) : (
           <Button
             variant="primary"
             size="lg"
             onClick={handleMintMyu}
-            disabled={isMintMyu || !canMintMyu || !!mintMyuSimError || isLoading || (chain && chain.id !== 8453)}
+            disabled={
+              isMintMyu ||
+              !canMintMyu ||
+              !!mintMyuSimError ||
+              isLoading ||
+              chain?.id !== 8453 ||
+              !isConnected
+            }
           >
-            {isMintMyu ? "Minting..." : isSwitching ? "Switching..." : "Mint with MYU"}
+            {isMintMyu
+              ? "Minting..."
+              : isSwitching
+              ? "Switching..."
+              : `Mint with MYU (${formatTokenDisplay(myuPrice, TOKENS.MYU.decimals, 0)} MYU)`}
           </Button>
-        </>
-      )}
-      <div className="mt-4 mb-1">
-        <strong>DEGEN Price:</strong> {formatUnits(degenPrice, TOKENS.DEGEN.decimals)} DEGEN
+        )}
+        {mintMyuSimError && chain?.id === 8453 && isConnected && (
+          <div className="text-red-600 mb-2 text-xs">{mintMyuSimError.message}</div>
+        )}
       </div>
-      {needsDegenApproval ? (
-        <Button
-          variant="secondary"
-          size="md"
-          onClick={handleApproveDegen}
-          disabled={isDegenApproving || isLoading || (chain && chain.id !== 8453)}
-        >
-          {isDegenApproving ? "Approving..." : isSwitching ? "Switching..." : "Approve DEGEN"}
-        </Button>
-      ) : (
-        <>
-          {mintDegenSimError && (
-            <div className="text-red-600 mb-2">Simulation failed: {mintDegenSimError.message}</div>
-          )}
+      <div className="mb-2">
+        {needsDegenApproval ? (
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={handleApproveDegen}
+            disabled={isDegenApproving || isLoading || chain?.id !== 8453 || !isConnected}
+          >
+            {isDegenApproving
+              ? "Approving..."
+              : isSwitching
+              ? "Switching..."
+              : `Approve DEGEN (${formatTokenDisplay(degenPrice, TOKENS.DEGEN.decimals, 0)} DEGEN)`}
+          </Button>
+        ) : (
           <Button
             variant="primary"
             size="lg"
             onClick={handleMintDegen}
-            disabled={isMintDegen || !canMintDegen || !!mintDegenSimError || isLoading || (chain && chain.id !== 8453)}
+            disabled={
+              isMintDegen ||
+              !canMintDegen ||
+              !!mintDegenSimError ||
+              isLoading ||
+              chain?.id !== 8453 ||
+              !isConnected
+            }
           >
-            {isMintDegen ? "Minting..." : isSwitching ? "Switching..." : "Mint with DEGEN"}
+            {isMintDegen
+              ? "Minting..."
+              : isSwitching
+              ? "Switching..."
+              : `Mint with DEGEN (${formatTokenDisplay(degenPrice, TOKENS.DEGEN.decimals, 0)} DEGEN)`}
           </Button>
-        </>
-      )}
-      {/* Network guardrail: If not Base, show info */}
-      {chain && chain.id !== 8453 && (
+        )}
+        {mintDegenSimError && chain?.id === 8453 && isConnected && (
+          <div className="text-red-600 mb-2 text-xs">{mintDegenSimError.message}</div>
+        )}
+      </div>
+      {chain?.id !== 8453 && (
         <div className="mt-4 text-yellow-500">
-          You are not connected to Base! Attempting to switch network...
+          Myutruvian is only on base... for now! Switch to base chain to mint.
+        </div>
+      )}
+      {!isConnected && (
+        <div className="mt-4 text-yellow-500">
+          Connect your wallet to mint!
         </div>
       )}
     </div>

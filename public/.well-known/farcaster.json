@@ -1,31 +1,33 @@
 {
-  "accountAssociation": {
-    "header": process.env.FARCASTER_HEADER,
-    "payload": process.env.FARCASTER_PAYLOAD,
-    "signature": process.env.FARCASTER_SIGNATURE
-},
   "frame": {
+    "name": "Myceliyou",
     "version": "1",
-    "name": "Myceliyou Myutruvian Mint",
-    "iconUrl": "https://myu.schmidtiest.xyz/icon.png",
+    "iconUrl": "https://myu.schmidtiest.xyz/myu.png",
     "homeUrl": "https://myu.schmidtiest.xyz",
-    "imageUrl": "https://myu.schmidtiest.xyz/image.png",
+    "imageUrl": "https://myu.schmidtiest.xyz/myu.png",
     "buttonTitle": "digIn",
-    "splashImageUrl": "https://myu.schmidtiest.xyz/splash.png",
+    "splashImageUrl": "https://myu.schmidtiest.xyz/myu1k.png",
     "splashBackgroundColor": "#39ff14",
     "webhookUrl": "https://myu.schmidtiest.xyz/api/webhook",
-    "subtitle": "mint, buy, lurk",
-    "description": "Experience the culture & capacity of Myceliyou",
+    "subtitle": "Mint, peep & learn",
+    "description": "buy myu, mint myutruvian, enjoyy",
     "primaryCategory": "utility",
+    "heroImageUrl": "https://myu.schmidtiest.xyz/myu.png",
     "tags": [
-      "minting",
       "community",
       "whitepaper",
-      "token",
-      "nft"
+      "myceliyou",
+      "nft",
+      "token"
     ],
-    "tagline": "Mint to burn and support",
-    "ogTitle": "Myceliyou - The Empire",
-    "ogDescription": "Get updates on myceliyou, wally, schmrdty and more"
+    "tagline": "check out and support to burn",
+    "ogTitle": "its a jungle out there",
+    "ogDescription": "Get the latest on Myceliyou, Wally the Wallet Watcher or Schmidtiest",
+    "ogImageUrl": "https://myu.schmidtiest.xyz/myu1k.png"
+  },
+  "accountAssociation": {
+    "header": "eyJmaWQiOjIxMzMxMCwidHlwZSI6ImF1dGgiLCJrZXkiOiIweGQzZDFlQTY0ZDM3NTQyQUJjMjVDMjdEYzcyYTIzNDQxMEIxQjYyMTEifQ",
+    "payload": "eyJkb21haW4iOiJteXUuc2NobWlkdGllc3QueHl6In0",
+    "signature": "xvuX358Vna2DuqDShOCVZ4hhfDnmD/v1+P4rHmdS3pkwOHLyeZYHofq9zQHE5rkCaVcHywm184e/yeGaeIUrHRs="
   }
 }

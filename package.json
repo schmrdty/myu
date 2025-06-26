@@ -6,13 +6,17 @@
     "dev": "next dev -p 6969 -H 0.0.0.0",
     "build": "next build",
     "start": "next start -p 6969 -H 0.0.0.0",
-    "lint": "next lint"
+    "lint": "next lint",
+    "clean": "rm package-lock.json && rm node_modules"
   },
   "dependencies": {
     "@coinbase/onchainkit": "^0.38.14",
     "@farcaster/frame-sdk": "^0.0.64",
     "@farcaster/frame-wagmi-connector": "^0.0.53",
-    "@tanstack/react-query": "^5",
+    "@farcaster/quick-auth": "^0.0.6",
+    "@reown/appkit": "^1.7.11",
+    "@reown/appkit-adapter-wagmi": "^1.7.11",
+    "@tanstack/react-query": "^5.81.2",
     "@upstash/redis": "^1.35.0",
     "@vercel/og": "^0.6.8",
     "@web3-storage/w3cli": "^7.12.0",
@@ -20,10 +24,11 @@
     "deps": "^1.0.0",
     "next": "^15.3.4",
     "peer": "^1.0.2",
+    "qrcode.react": "^4.2.0",
     "react": "^18",
     "react-dom": "^18",
-    "viem": "^2.27.2",
-    "wagmi": "^2.14.11"
+    "viem": "^2.31.4",
+    "wagmi": "^2.15.6"
   },
   "devDependencies": {
     "@types/node": "^20",
