@@ -7,7 +7,7 @@ import { useMintInfo } from "@/hooks/useMintInfo";
 import { useAllowances } from "@/hooks/useAllowances";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
 import { useChainGuard } from "@/hooks/useChainGuard";
-import { useWriteContract, useSimulateContract } from "wagmi";
+import { useWriteContract } from "wagmi";
 import { NFT_ABI, ERC20_ABI, CONTRACT_ADDRESS, TOKENS } from "@/lib/constants";
 
 const MINT_OPTIONS = [1, 5, 10, 20, 50, 100, 500];
