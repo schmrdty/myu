@@ -1,58 +1,56 @@
+// Location: /components/ConnectWalletButton.tsx
+
 "use client";
 import { useState } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { Button } from "@/components/DemoComponents";
+import { useFrameContext } from "@/hooks/useFrameContext";
 
 export function ConnectWalletButton() {
   const { isConnected, address } = useAccount();
   const { connect, connectors, error, status } = useConnect();
   const { disconnect } = useDisconnect();
   const [showWallets, setShowWallets] = useState(false);
-  const [pending, setPending] = useState<string | null>(null);
+  const [pendingId, setPendingId] = useState<string | null>(null);
 
-  // Filter for visible connectors (MetaMask, Coinbase)
-  const visibleConnectors = connectors.filter(
-    (c) =>
-      c.id === "injected" ||
-      c.id === "coinbaseWallet" ||
-      c.name.toLowerCase().includes("metamask")
-  );
+  // Hide connect button in Farcaster frames for best UX
+  const { isFrame } = useFrameContext?.() || { isFrame: false };
+  if (isFrame) {
+    return (
+      <div className="text-muted text-center text-sm py-2">
+	Wallet connection is handled by Farcaster in frames!
+      </div>
+    );
+  }
 
   if (isConnected && address) {
     return (
-      <Button variant="secondary" onClick={() => disconnect()}>
+      <Button variant="secondary" onClick={disconnect}>
         {address.slice(0, 6)}...{address.slice(-4)} (Disconnect)
-      </Button>
-    );
-  }
-  if (isConnected && !address) {
-    return (
-      <Button variant="secondary" onClick={() => disconnect()}>
-        Disconnect
       </Button>
     );
   }
 
   return (
-    <div>
+    <div style={{ position: "relative" }}>
       <Button variant="primary" onClick={() => setShowWallets((v) => !v)}>
         Connect Wallet
       </Button>
       {showWallets && (
         <div className="wallet-modal bg-cyberglass border border-cyber-primary rounded-lg p-4 mt-2 z-10">
-          {visibleConnectors.map((connector) => (
+          {connectors.map((connector) => (
             <Button
               key={connector.id}
               className="w-full mb-2"
               onClick={() => {
-                setPending(connector.id);
+                setPendingId(connector.id);
                 connect({ connector });
                 setShowWallets(false);
               }}
               disabled={!connector.ready}
               variant="outline"
             >
-              {status === "pending" && pending === connector.id
+              {status === "pending" && pendingId === connector.id
                 ? "Connecting..."
                 : connector.name}
             </Button>

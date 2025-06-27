@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { formatEther, formatUnits } from "viem";
+import Image from "next/image";
 import { Button } from "@/components/DemoComponents";
 import { useMintInfo } from "@/hooks/useMintInfo";
 import { useAllowances } from "@/hooks/useAllowances";
@@ -10,15 +11,34 @@ import { useChainGuard } from "@/hooks/useChainGuard";
 import { useWriteContract } from "wagmi";
 import { NFT_ABI, ERC20_ABI, CONTRACT_ADDRESS, TOKENS } from "@/lib/constants";
 
+const TIER_IMAGES = [
+  process.env.NEXT_PUBLIC_0,
+  process.env.NEXT_PUBLIC_1,
+  process.env.NEXT_PUBLIC_2,
+  process.env.NEXT_PUBLIC_3,
+  process.env.NEXT_PUBLIC_4,
+  process.env.NEXT_PUBLIC_5,
+  process.env.NEXT_PUBLIC_6,
+  process.env.NEXT_PUBLIC_7,
+  process.env.NEXT_PUBLIC_8,
+];
+
 const MINT_OPTIONS = [1, 5, 10, 20, 50, 100, 500];
 
-function formatTokenDisplay(amount: bigint, decimals: number, decimalsToShow = 0) {
-  const value = Number(formatUnits(amount, decimals));
+// Format tokens for human display
+function toBigIntSafe(x: bigint | string | number): bigint {
+  if (typeof x === "bigint") return x;
+  if (typeof x === "string") return BigInt(x);
+  return BigInt(x);
+}
+
+function formatTokenDisplay(amount: bigint | string | number, decimals: number, decimalsToShow = 0) {
+  const value = Number(formatUnits(toBigIntSafe(amount), decimals));
   return value.toLocaleString(undefined, {
     maximumFractionDigits: decimalsToShow,
     minimumFractionDigits: decimalsToShow,
   });
-}
+} 
 
 export default function MintWidget() {
   const [mintAmount, setMintAmount] = useState(1);
@@ -33,24 +53,29 @@ export default function MintWidget() {
   // Token balances (for MYU, DEGEN)
   const { myu: myuBalance, degen: degenBalance } = useTokenBalances();
 
-  // Allowances, capped to allow 101x buy
+  // Allowances
   const { myu: myuAllowance, degen: degenAllowance, maxMyuApproval, maxDegenApproval } = useAllowances(
     mintInfo?.myuPrice ?? 0n,
     mintInfo?.degenPrice ?? 0n
   );
 
-  // Approve & mint hooks
+  // Write contract hooks
   const { writeContract: writeApproveMyu, isPending: isMyuApproving } = useWriteContract();
   const { writeContract: writeApproveDegen, isPending: isDegenApproving } = useWriteContract();
   const { writeContract: writeMintEth, isPending: isMintEth } = useWriteContract();
   const { writeContract: writeMintMyu, isPending: isMintMyu } = useWriteContract();
   const { writeContract: writeMintDegen, isPending: isMintDegen } = useWriteContract();
 
-  // Simulate contract calls for error handling (optional, advanced)
-  // ... (omitted for brevity, but you can wire up as before)
-
   const needsMyuApproval = myuAllowance < ((mintInfo?.myuPrice ?? 0n) * BigInt(mintAmount));
   const needsDegenApproval = degenAllowance < ((mintInfo?.degenPrice ?? 0n) * BigInt(mintAmount));
+
+  // Robust booleans
+  const soldOut = !!(mintInfo && mintInfo.remainingMints <= 0);
+  const userMaxed = !!(mintInfo && mintInfo.userMints >= 500);
+
+  // Show static tier image if available
+  const tierNum = mintInfo?.currentTierNum ?? 0;
+  const tierImage = TIER_IMAGES[tierNum] || null;
 
   function handleApproveMyu() {
     setError(null);
@@ -58,7 +83,7 @@ export default function MintWidget() {
       abi: ERC20_ABI,
       address: TOKENS.MYU.address as `0x${string}`,
       functionName: "approve",
-      args: [CONTRACT_ADDRESS, maxMyuApproval], // Cap to 101x
+      args: [CONTRACT_ADDRESS, maxMyuApproval],
     });
   }
   function handleApproveDegen() {
@@ -67,7 +92,7 @@ export default function MintWidget() {
       abi: ERC20_ABI,
       address: TOKENS.DEGEN.address as `0x${string}`,
       functionName: "approve",
-      args: [CONTRACT_ADDRESS, maxDegenApproval], // Cap to 101x
+      args: [CONTRACT_ADDRESS, maxDegenApproval],
     });
   }
   function handleMintEth() {
@@ -106,21 +131,44 @@ export default function MintWidget() {
         <div className="mb-2">Loading mint info...</div>
       ) : mintInfo ? (
         <>
-          <div className="mb-2">
-            <strong>Minted:</strong> {mintInfo.totalMinted.toLocaleString()}/{mintInfo.maxSupply.toLocaleString()}
-          </div>
-          <div className="mb-2">
-            <strong>Your Mints:</strong> {mintInfo.userMints}/501
-          </div>
-          <div className="mb-2">
-            <strong>Remaining:</strong> {mintInfo.remainingMints.toLocaleString()}
-          </div>
-          <div className="mb-2">
-            <strong>Current Tier:</strong> {mintInfo.currentTierNum}
+          <div className="mb-2"><strong>Minted:</strong> {mintInfo.totalMinted.toLocaleString()}/{mintInfo.maxSupply.toLocaleString()}</div>
+          <div className="mb-2"><strong>Your Mints:</strong> {mintInfo.userMints}/500</div>
+          <div className="mb-2"><strong>Remaining:</strong> {mintInfo.remainingMints.toLocaleString()}</div>
+          <div className="mb-2"><strong>Current Tier:</strong> {tierNum}</div>
+          {tierImage && (
+            <Image
+              src={tierImage}
+              alt={`Tier ${tierNum} price chart`}
+              width={320}
+              height={80}
+              style={{ margin: "0 auto", borderRadius: 12, boxShadow: "0 0 12px #7fffd4, 0 0 28px #ff90c2" }}
+              unoptimized // <-- add this if you want to skip Next.js optimization for IPFS
+	      priority // optionally, mark as high-priority for LCP
+            />
+	  )}
+
+            <div className="mb-2">
+            <strong>Price per Mint:</strong>
+            <ul>
+              <li>ETH: {formatEther(mintInfo.ethPrice)} ETH</li>
+              <li>MYU: {formatTokenDisplay(mintInfo.myuPrice, TOKENS.MYU.decimals, 0)} MYU</li>
+              <li>DEGEN: {formatTokenDisplay(mintInfo.degenPrice, TOKENS.DEGEN.decimals, 0)} DEGEN</li>
+            </ul>
           </div>
         </>
       ) : (
         <div className="mb-2 text-red-500">No mint info available</div>
+      )}
+
+      {soldOut && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-3">
+          Sold out! No NFTs left to mint.
+        </div>
+      )}
+      {userMaxed && (
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-3">
+          You have minted the maximum allowed NFTs (500).
+        </div>
       )}
       {(chainError || error) && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-3">
@@ -133,6 +181,7 @@ export default function MintWidget() {
           className="rounded px-2 py-1"
           value={mintAmount}
           onChange={e => setMintAmount(Number(e.target.value))}
+          disabled={!!soldOut || !!userMaxed}
         >
           {MINT_OPTIONS.map(n => (
             <option key={n} value={n}>{n}</option>
@@ -148,7 +197,9 @@ export default function MintWidget() {
             isMintEth ||
             loadingMint ||
             !isConnected ||
-            !isBase
+            !isBase ||
+            soldOut ||
+            userMaxed
           }
         >
           {isMintEth
@@ -162,7 +213,7 @@ export default function MintWidget() {
             variant="secondary"
             size="md"
             onClick={handleApproveMyu}
-            disabled={isMyuApproving || loadingMint || !isConnected || !isBase}
+            disabled={isMyuApproving || loadingMint || !isConnected || !isBase || soldOut || userMaxed}
           >
             {isMyuApproving
               ? "Approving..."
@@ -177,7 +228,9 @@ export default function MintWidget() {
               isMintMyu ||
               loadingMint ||
               !isConnected ||
-              !isBase
+              !isBase ||
+              soldOut ||
+              userMaxed
             }
           >
             {isMintMyu
@@ -192,7 +245,7 @@ export default function MintWidget() {
             variant="secondary"
             size="md"
             onClick={handleApproveDegen}
-            disabled={isDegenApproving || loadingMint || !isConnected || !isBase}
+            disabled={isDegenApproving || loadingMint || !isConnected || !isBase || soldOut || userMaxed}
           >
             {isDegenApproving
               ? "Approving..."
@@ -207,7 +260,9 @@ export default function MintWidget() {
               isMintDegen ||
               loadingMint ||
               !isConnected ||
-              !isBase
+              !isBase ||
+              soldOut ||
+              userMaxed
             }
           >
             {isMintDegen

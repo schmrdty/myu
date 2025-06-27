@@ -1,5 +1,3 @@
-// Location: /next.config.js
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Allow images from any domain (for development)
@@ -11,10 +9,10 @@ const nextConfig = {
       },
     ],
   },
-
+  
   // Disable strict mode for development
   reactStrictMode: false,
-
+  
   // Allow external access
   async headers() {
     return [
@@ -30,17 +28,6 @@ const nextConfig = {
     ];
   },
 
-  // Vercel/Farcaster manifest redirect
-  async redirects() {
-    return [
-      {
-        source: '/.well-known/farcaster.json',
-        destination: 'https://api.farcaster.xyz/miniapps/hosted-manifest/0197ad42-d0ec-1222-a1e5-478e860b06d0',
-        permanent: false,
-      },
-    ];
-  },
-
   // Webpack configuration to handle chunk loading
   webpack: (config, { isServer }) => {
     if (!isServer) {
@@ -49,5 +36,15 @@ const nextConfig = {
     return config;
   },
 };
-
+/*  async redirects() {
+    return [
+      {
+        source: '/.well-known/farcaster.json',
+        destination: 'https://api.farcaster.xyz/miniapps/hosted-manifest/0197ad42-d0ec-1222-a1e5-478e860b06d0',
+        permanent: false,
+      },
+    ];
+  },
+};
+*/
 module.exports = nextConfig;

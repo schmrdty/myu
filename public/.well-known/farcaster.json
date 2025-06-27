@@ -1,10 +1,4 @@
 {
-  "accountAssociation": {
-    "header": "eyJmaWQiOjIxMzMxMCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDczODVFMUE4MjRBNDA1Y0JCMTNCNjQ4MjlCRjE1MDljZDJBNDcxZjcifQ",
-    "payload": "eyJkb21haW4iOiJteXUuc2NobWlkdGllc3QueHl6In0",
-    "signature": "MHgyODA5NDE4ZjkxZjJlNzRlOWNkZTJiYTkyOTM1M2NiMTg0M2U2NTMxNjRhY2E0N2RmYjk0N2Q4NDlhNGE3MDM0NDQxN2VkODM0YjIxMGM4ZmIzYTRkZjVhOWM4MjcyOGIxOWM3NGIzY2RhMGU1NzdkMzhiN2JmZjI1NGQyNGYxNzFj"
-  }
-}{
   "frame": {
     "name": "Myutruvian NFT",
     "version": "1",

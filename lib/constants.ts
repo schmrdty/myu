@@ -2,7 +2,8 @@
 
 // ⏺️ EVM addresses and token metadata
 export const CONTRACT_ADDRESS = "0xC80577C2C0e860fC2935c809609Fa46456cECC51";
-export const BASE_RPC_URL = process.env.NEXT_PUBLIC_BASE_RPC_URL ?? "https://mainnet.base.org";
+export const BASE_RPC_URL = process.env.NEXT_PUBLIC_BASE_RPC_URL ?? "https://base.llamarpc.com";
+export const RU_BASED = process.env.NEXT_PUBLIC_BASE_RU2 ?? "https://mainnet.base.org";
 
 // ERC20 tokens (add decimals if different than 18)
 export const TOKENS = {
