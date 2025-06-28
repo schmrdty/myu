@@ -7,15 +7,13 @@ import { MiniAppWagmiProvider } from "@/components/MiniAppWagmiProvider";
 import { MintFrameButton } from "@/components/MintFrameButton";
 import { Frame } from "@/components/Frame";
 
-// This is the Frame endpoint you want to deep link/QR for mobile usage
-const FRAME_URL = "https://myu.schmidtiest.xyz/api/frame";
+const FRAME_URL = process.env.NEXT_PUBLIC_FRAME_URL || "/api/frame";
 
 export default function FrameLandingPage() {
   const [isMiniApp, setIsMiniApp] = useState(false);
   const [fid, setFid] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Preconnect for Quick Auth performance (web)
   useEffect(() => {
     const link = document.createElement("link");
     link.rel = "preconnect";
@@ -26,7 +24,6 @@ export default function FrameLandingPage() {
     };
   }, []);
 
-  // Detect Farcaster Mini App and try Quick Auth if not in-app
   useEffect(() => {
     (async () => {
       const mini = await sdk.isInMiniApp();
@@ -35,7 +32,6 @@ export default function FrameLandingPage() {
 
       if (!mini) {
         try {
-          // Try to get a Quick Auth token and FID
           const { token } = await sdk.quickAuth.getToken();
           if (token) {
             const res = await fetch("/api/me", {
@@ -63,16 +59,15 @@ export default function FrameLandingPage() {
     );
   }
 
-  // Mini App (Warpcast/Frame) UI
+  // Mini App (Farcaster/Frame) UI
   if (isMiniApp) {
     return (
       <MiniAppWagmiProvider>
         <Frame>
           <h1 className="cyberpunk text-3xl mb-6">Mint via Farcaster Frame</h1>
           <p className="mb-4 text-lg text-muted">
-            You are in the Farcaster app. Mint below!
+            You are in the Mini-App. Mint below!
           </p>
-          {/* You can now use wagmi hooks and render your mint UI here */}
           <MintFrameButton />
         </Frame>
       </MiniAppWagmiProvider>
@@ -115,7 +110,14 @@ export default function FrameLandingPage() {
           </button>
         )}
       </div>
-      {/* Optional: Deep link or info for the Frame endpoint */}
+      <a
+        href={FRAME_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="btn-cyber"
+      >
+        Mint in Farcaster
+      </a>
       <MintFrameButton />
     </Frame>
   );

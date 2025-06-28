@@ -7,7 +7,7 @@ export const RU_BASED = process.env.NEXT_PUBLIC_BASE_RU2 ?? "https://mainnet.bas
 
 // ERC20 tokens (add decimals if different than 18)
 export const TOKENS = {
-  ETH: { symbol: "ETH", decimals: 18 },
+  ETH: { address: "native", symbol: "ETH", decimals: 18 },
   MYU: { address: "0x24c91E5E9eb13E72Db41EBC5816Af7f259647B07", symbol: "MYU", decimals: 18 },
   DEGEN: { address: "0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed", symbol: "DEGEN", decimals: 18 },
 };
