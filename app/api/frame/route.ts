@@ -29,10 +29,10 @@ export async function GET(request: NextRequest) {
       abi: NFT_ABI,
       functionName: "getMintInfo",
       args: [userAddress as `0x${string}`],
-    }) as readonly [bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint];
+      }) as readonly [bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint];
 
     // ✅ Use all variables in the URL
-    const ogImageUrl = new URL(`${process.env.NEXT_PUBLIC_HOST || "https://yoursite.com"}/api/frame/og`);
+    const ogImageUrl = new URL(`${process.env.NEXT_PUBLIC_HOST || "https://myu.schmidtiest.xyz"}/api/frame/og`);
     ogImageUrl.searchParams.set("totalMinted", totalMinted.toString());
     ogImageUrl.searchParams.set("maxSupply", maxSupply.toString());
     ogImageUrl.searchParams.set("userMints", userMints.toString());
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         { label: `Mint with DEGEN (${degenPrice})`, action: { type: "post", target: "/api/frame/mint/degen" } },
         { label: "View Contract", action: { type: "link", target: `https://basescan.org/address/${CONTRACT_ADDRESS}` } }
       ],
-      postUrl: `${process.env.NEXT_PUBLIC_HOST || "https://yoursite.com"}/api/frame`,
+      postUrl: `${process.env.NEXT_PUBLIC_HOST || "https://myu.schmidtiest.xyz"}/api/frame`,
       state: {
         totalMinted: totalMinted.toString(),
         userMints: userMints.toString(),
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     console.error("Failed to fetch mint info:", error);
     
     return Response.json({
-      image: `${process.env.NEXT_PUBLIC_HOST || "https://yoursite.com"}/api/frame/og`,
+      image: `${process.env.NEXT_PUBLIC_HOST || "https://myu.schmidtiest.xyz"}/api/frame/og`,
       buttons: [
         { label: "Mint with ETH", action: { type: "post", target: "/api/frame/mint/eth" } },
         { label: "Mint with MYU", action: { type: "post", target: "/api/frame/mint/myu" } },

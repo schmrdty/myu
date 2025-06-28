@@ -11,17 +11,17 @@ import { useChainGuard } from "@/hooks/useChainGuard";
 import { useWriteContract } from "wagmi";
 import { NFT_ABI, ERC20_ABI, CONTRACT_ADDRESS, TOKENS } from "@/lib/constants";
 
-const TIER_IMAGES = [
-  process.env.NEXT_PUBLIC_0,
-  process.env.NEXT_PUBLIC_1,
-  process.env.NEXT_PUBLIC_2,
-  process.env.NEXT_PUBLIC_3,
-  process.env.NEXT_PUBLIC_4,
-  process.env.NEXT_PUBLIC_5,
-  process.env.NEXT_PUBLIC_6,
-  process.env.NEXT_PUBLIC_7,
-  process.env.NEXT_PUBLIC_8,
-];
+const TIER_IMAGES: Record<number, string | undefined> = {
+  0: process.env.NEXT_PUBLIC_0,
+  1: process.env.NEXT_PUBLIC_1,
+  2: process.env.NEXT_PUBLIC_2,
+  3: process.env.NEXT_PUBLIC_3,
+  4: process.env.NEXT_PUBLIC_4,
+  5: process.env.NEXT_PUBLIC_5,
+  6: process.env.NEXT_PUBLIC_6,
+  7: process.env.NEXT_PUBLIC_7,
+  8: process.env.NEXT_PUBLIC_8,
+};
 
 const MINT_OPTIONS = [1, 5, 10, 20, 50, 100, 500];
 
@@ -136,17 +136,22 @@ export default function MintWidget() {
           <div className="mb-2"><strong>Remaining:</strong> {mintInfo.remainingMints.toLocaleString()}</div>
           <div className="mb-2"><strong>Current Tier:</strong> {tierNum}</div>
           {tierImage && (
-            <Image
-              src={tierImage}
-              alt={`Tier ${tierNum} price chart`}
-              width={320}
-              height={80}
-              style={{ margin: "0 auto", borderRadius: 12, boxShadow: "0 0 12px #7fffd4, 0 0 28px #ff90c2" }}
-              unoptimized // <-- add this if you want to skip Next.js optimization for IPFS
-	      priority // optionally, mark as high-priority for LCP
-            />
-	  )}
-
+            <div className="tier-image-container" style={{ width: '320px', height: '80px', marginBottom: '1rem' }}>
+              <Image 
+                src={tierImage} 
+                alt={`Tier ${tierNum}`}
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'contain'
+                }}
+                onError={(e) => {
+                  console.error(`Failed to load tier image for tier ${tierNum}:`, e);
+                }}
+		priority
+              />
+            </div>
+          )}
             <div className="mb-2">
             <strong>Price per Mint:</strong>
             <ul>

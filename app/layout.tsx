@@ -4,6 +4,7 @@ import "@/lib/theme.css";
 import "@coinbase/onchainkit/styles.css";
 import type { Metadata, Viewport } from "next";
 import ClientRoot from "./ClientRoot";
+import { FrameProvider } from "@/hooks/useFrameContext";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -41,7 +42,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="bg-[var(--bg-color)]">
-        <ClientRoot>{children}</ClientRoot>
+        <FrameProvider>
+          <ClientRoot>{children}</ClientRoot>
+        </FrameProvider>
       </body>
     </html>
   );

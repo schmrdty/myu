@@ -1,13 +1,11 @@
-// Location: /components/ConnectWalletButton.tsx
-
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { Button } from "@/components/DemoComponents";
 import { useFrameContext } from "@/hooks/useFrameContext";
 
 export function ConnectWalletButton() {
-  const { isConnected, address } = useAccount();
+  const { isConnected, address, isReconnecting } = useAccount();
   const { connect, connectors, error, status } = useConnect();
   const { disconnect } = useDisconnect();
   const [showWallets, setShowWallets] = useState(false);
@@ -15,17 +13,29 @@ export function ConnectWalletButton() {
 
   // Hide connect button in Farcaster frames for best UX
   const { isFrame } = useFrameContext?.() || { isFrame: false };
+  
+  // Auto-close wallet selector on successful connection
+  useEffect(() => {
+    if (isConnected) {
+      setShowWallets(false);
+    }
+  }, [isConnected]);
+
   if (isFrame) {
     return (
       <div className="text-muted text-center text-sm py-2">
-	Wallet connection is handled by Farcaster in frames!
+        Wallet connection is handled by Farcaster in frames!
       </div>
     );
   }
 
+  if (isReconnecting) {
+    return <Button variant="secondary" disabled>Reconnecting...</Button>;
+  }
+
   if (isConnected && address) {
     return (
-      <Button variant="secondary" onClick={disconnect}>
+      <Button variant="secondary" onClick={() => disconnect()}>
         {address.slice(0, 6)}...{address.slice(-4)} (Disconnect)
       </Button>
     );
@@ -37,26 +47,25 @@ export function ConnectWalletButton() {
         Connect Wallet
       </Button>
       {showWallets && (
-        <div className="wallet-modal bg-cyberglass border border-cyber-primary rounded-lg p-4 mt-2 z-10">
+        <div className="wallet-modal bg-cyberglass border border-cyber-primary rounded-lg p-4 mt-2 z-10 absolute left-0 right-0">
           {connectors.map((connector) => (
             <Button
-              key={connector.id}
+              key={connector.uid}
               className="w-full mb-2"
               onClick={() => {
-                setPendingId(connector.id);
+                setPendingId(connector.uid);
                 connect({ connector });
-                setShowWallets(false);
               }}
-              disabled={!connector.ready}
+              disabled={status === "pending" && pendingId === connector.uid}
               variant="outline"
             >
-              {status === "pending" && pendingId === connector.id
+              {status === "pending" && pendingId === connector.uid
                 ? "Connecting..."
                 : connector.name}
             </Button>
           ))}
           {error && (
-            <div className="text-red-500 px-2 py-1 text-xs">
+            <div className="text-red-500 px-2 py-1 text-xs mt-2">
               {error.message}
             </div>
           )}
