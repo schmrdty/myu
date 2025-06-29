@@ -125,12 +125,13 @@ function Card({
 
 type IconProps = {
   name: "heart" | "star" | "check" | "plus" | "arrow-right";
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   className?: string;
 };
 
 export function Icon({ name, size = "md", className = "" }: IconProps) {
   const sizeClasses = {
+    xs: "w-3 h-3",
     sm: "w-4 h-4",
     md: "w-5 h-5",
     lg: "w-6 h-6",
@@ -304,7 +305,7 @@ export function Main({ setActiveTab }: MainProps) {
         <p className="mb-4">Built on base and expanding!</p>
         <Button
           onClick={() => setActiveTab("docs")}
-          icon={<Icon name="arrow-right" size="sm" />}
+          icon={<Icon name="arrow-right" size="xs" />}
         >
           Explore Docs
         </Button>

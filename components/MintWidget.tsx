@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { formatEther, formatUnits, decodeEventLog, type TransactionReceipt, type Log } from "viem";
-import Image from "next/image";
 import { Button } from "@/components/DemoComponents";
 import { useMintInfo } from "@/hooks/useMintInfo";
 import { useAllowances } from "@/hooks/useAllowances";
@@ -10,18 +9,6 @@ import { useSplitInfo } from "@/hooks/useSplitInfo";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { NFT_ABI, ERC20_ABI, CONTRACT_ADDRESS, TOKENS } from "@/lib/constants";
 import { MintSuccessModal } from "@/components/MintSuccessModal";
-
-const TIER_IMAGES: Record<number, string | undefined> = {
-  0: process.env.NEXT_PUBLIC_0,
-  1: process.env.NEXT_PUBLIC_1,
-  2: process.env.NEXT_PUBLIC_2,
-  3: process.env.NEXT_PUBLIC_3,
-  4: process.env.NEXT_PUBLIC_4,
-  5: process.env.NEXT_PUBLIC_5,
-  6: process.env.NEXT_PUBLIC_6,
-  7: process.env.NEXT_PUBLIC_7,
-  8: process.env.NEXT_PUBLIC_8,
-};
 
 const MINT_OPTIONS = [1, 5, 10, 20, 50, 100, 500];
 
@@ -113,7 +100,6 @@ export default function MintWidget() {
   const soldOut = !!(mintInfo && mintInfo.remainingMints <= 0);
   const userMaxed = !!(mintInfo && mintInfo.userMints >= 500);
   const tierNum = mintInfo?.currentTierNum ?? 0;
-  const tierImage = TIER_IMAGES[tierNum] || null;
 
   function handleApproveMyu() {
     setError(null);
@@ -173,20 +159,6 @@ export default function MintWidget() {
           <div className="mb-2"><strong>Your Mints:</strong> {mintInfo.userMints}/500</div>
           <div className="mb-2"><strong>Remaining:</strong> {mintInfo.remainingMints.toLocaleString()}</div>
           <div className="mb-2"><strong>Current Tier:</strong> {tierNum}</div>
-          {tierImage && (
-            <div className="tier-image-container" style={{ width: '320px', height: '80px', marginBottom: '1rem', position: 'relative' }}>
-              <Image
-                src={tierImage}
-                alt={`Tier ${tierNum}`}
-                width={320}
-                height={80}
-                style={{
-                  objectFit: 'contain'
-                }}
-                priority
-              />
-            </div>
-          )}
           <div className="mb-2">
             <strong>Price per Mint:</strong>
             <ul>
@@ -354,7 +326,6 @@ export default function MintWidget() {
             ? formatTokenDisplay((mintInfo?.myuPrice ?? 0n) * BigInt(mintAmount), TOKENS.MYU.decimals, 0)
             : formatTokenDisplay((mintInfo?.degenPrice ?? 0n) * BigInt(mintAmount), TOKENS.DEGEN.decimals, 0)
         }
-        prerevealImage={TIER_IMAGES[mintInfo?.currentTierNum ?? 0] || undefined}
       />
     </div>
   );
