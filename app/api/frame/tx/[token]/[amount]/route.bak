@@ -1,0 +1,89 @@
+// Location: /app/api/frame/tx/[token]/[amount]/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { CONTRACT_ADDRESS, NFT_ABI, BASE_RPC_URL, RU_BASED } from "@/lib/constants";
+import { encodeFunctionData } from "viem";
+import { createPublicClient, http } from "viem";
+import { base } from "viem/chains";
+
+// Use a real Base public RPC endpoint for contract reads
+const publicClient = createPublicClient({
+  chain: base,
+  transport: http(BASE_RPC_URL || RU_BASED),
+});
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ token: string; amount: string }> }
+) {
+  const { token, amount } = await params;
+
+  if (!["eth", "myu", "degen"].includes(token)) {
+    return NextResponse.json({ error: "Invalid token" }, { status: 400 });
+  }
+
+  const amountNum = parseInt(amount);
+  if (isNaN(amountNum) || amountNum < 1 || amountNum > 10) {
+    return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
+  }
+
+  // 1. Read live price per unit from contract
+  let ethPrice = 0n, myuPrice = 0n, degenPrice = 0n;
+  try {
+    // You could enhance this to read the user's address from the session/state if you want user-specific pricing.
+    const [
+      userMints,
+      remainingMints,
+      currentTierNum,
+      eth,
+      myu,
+      degen,
+      totalMinted,
+      maxSupply
+    ] = await publicClient.readContract({
+      address: CONTRACT_ADDRESS,
+      abi: NFT_ABI,
+      functionName: "getMintInfo",
+      args: ["0x0000000000000000000000000000000000000000"], // For pricing, doesn't matter
+    }) as [bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint];
+    ethPrice = eth;
+    myuPrice = myu;
+    degenPrice = degen;
+  } catch (err) {
+    return NextResponse.json({ error: "Failed to fetch mint price from contract" }, { status: 500 });
+  }
+
+  // 2. Compute value for ETH mints (and zero for tokens)
+  let value = 0n;
+  if (token === "eth") {
+    value = ethPrice * BigInt(amountNum);
+  }
+
+  // 3. Encode the call data for the correct minting function
+  const functionName =
+    token === "eth" ? "mintWithEth"
+    : token === "myu" ? "mintWithMyu"
+    : "mintWithDegen";
+
+  const data = encodeFunctionData({
+    abi: [{
+      inputs: [{ name: "count", type: "uint256" }],
+      name: functionName,
+      outputs: [],
+      stateMutability: token === "eth" ? "payable" : "nonpayable",
+      type: "function"
+    }],
+    functionName,
+    args: [BigInt(amountNum)],
+  });
+
+  return NextResponse.json({
+    chainId: "eip155:8453",
+    method: "eth_sendTransaction",
+    params: {
+      to: CONTRACT_ADDRESS,
+      data,
+      value: `0x${value.toString(16)}`,
+    },
+  });
+}
