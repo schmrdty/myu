@@ -1,15 +1,15 @@
-// Location: /components/MintWidget.tsx
-
-import { useState } from "react";
-import { formatEther, formatUnits } from "viem";
+import { useState, useEffect } from "react";
+import { formatEther, formatUnits, decodeEventLog, type TransactionReceipt, type Log } from "viem";
 import Image from "next/image";
 import { Button } from "@/components/DemoComponents";
 import { useMintInfo } from "@/hooks/useMintInfo";
 import { useAllowances } from "@/hooks/useAllowances";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
 import { useChainGuard } from "@/hooks/useChainGuard";
-import { useWriteContract } from "wagmi";
+import { useSplitInfo } from "@/hooks/useSplitInfo";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { NFT_ABI, ERC20_ABI, CONTRACT_ADDRESS, TOKENS } from "@/lib/constants";
+import { MintSuccessModal } from "@/components/MintSuccessModal";
 
 const TIER_IMAGES: Record<number, string | undefined> = {
   0: process.env.NEXT_PUBLIC_0,
@@ -25,7 +25,6 @@ const TIER_IMAGES: Record<number, string | undefined> = {
 
 const MINT_OPTIONS = [1, 5, 10, 20, 50, 100, 500];
 
-// Format tokens for human display
 function toBigIntSafe(x: bigint | string | number): bigint {
   if (typeof x === "bigint") return x;
   if (typeof x === "string") return BigInt(x);
@@ -38,42 +37,81 @@ function formatTokenDisplay(amount: bigint | string | number, decimals: number, 
     maximumFractionDigits: decimalsToShow,
     minimumFractionDigits: decimalsToShow,
   });
-} 
+}
 
 export default function MintWidget() {
   const [mintAmount, setMintAmount] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [lastMintTxHash, setLastMintTxHash] = useState<string>("");
+  const [lastPaymentMethod, setLastPaymentMethod] = useState<"ETH" | "MYU" | "DEGEN">("ETH");
+  const [mintedTokenIds, setMintedTokenIds] = useState<number[]>([]);
 
-  // Chain/connection state and error
   const { isConnected, isBase, error: chainError } = useChainGuard();
-
-  // Mint info (prices, supply, etc)
   const { loading: loadingMint, data: mintInfo } = useMintInfo();
-
-  // Token balances (for MYU, DEGEN)
+  const { data: splitInfo } = useSplitInfo();
   const { myu: myuBalance, degen: degenBalance } = useTokenBalances();
-
-  // Allowances
   const { myu: myuAllowance, degen: degenAllowance, maxMyuApproval, maxDegenApproval } = useAllowances(
     mintInfo?.myuPrice ?? 0n,
     mintInfo?.degenPrice ?? 0n
   );
 
-  // Write contract hooks
   const { writeContract: writeApproveMyu, isPending: isMyuApproving } = useWriteContract();
   const { writeContract: writeApproveDegen, isPending: isDegenApproving } = useWriteContract();
-  const { writeContract: writeMintEth, isPending: isMintEth } = useWriteContract();
-  const { writeContract: writeMintMyu, isPending: isMintMyu } = useWriteContract();
-  const { writeContract: writeMintDegen, isPending: isMintDegen } = useWriteContract();
+  const { writeContract: writeMintEth, isPending: isMintEth, data: ethMintHash } = useWriteContract();
+  const { writeContract: writeMintMyu, isPending: isMintMyu, data: myuMintHash } = useWriteContract();
+  const { writeContract: writeMintDegen, isPending: isMintDegen, data: degenMintHash } = useWriteContract();
+
+  const { data: ethReceipt } = useWaitForTransactionReceipt({ hash: ethMintHash });
+  const { data: myuReceipt } = useWaitForTransactionReceipt({ hash: myuMintHash });
+  const { data: degenReceipt } = useWaitForTransactionReceipt({ hash: degenMintHash });
+
+  useEffect(() => {
+    const handleMintSuccess = (
+      receipt: TransactionReceipt | undefined,
+      paymentMethod: "ETH" | "MYU" | "DEGEN"
+    ) => {
+      if (!receipt) return;
+
+      const tokenIds: number[] = [];
+      receipt.logs.forEach((log: Log) => {
+        try {
+          const decoded = decodeEventLog({
+            abi: NFT_ABI,
+            data: log.data,
+            topics: log.topics,
+          });
+          if (decoded.eventName === 'Minted' && decoded.args) {
+            // Minted event: [minter, startId, count, paymentToken]
+            const argsArr = decoded.args as readonly [string, bigint, bigint, string] | readonly unknown[];
+            const startId = Number(argsArr[1]);
+            const count = Number(argsArr[2]);
+            for (let i = 0; i < count; i++) {
+              tokenIds.push(startId + i);
+            }
+          }
+        } catch {
+          // Not a Minted event, skip
+        }
+      });
+
+      if (tokenIds.length > 0) {
+        setMintedTokenIds(tokenIds);
+        setLastMintTxHash(receipt.transactionHash);
+        setLastPaymentMethod(paymentMethod);
+        setShowSuccessModal(true);
+      }
+    };
+
+    if (ethReceipt?.status === 'success') handleMintSuccess(ethReceipt, "ETH");
+    if (myuReceipt?.status === 'success') handleMintSuccess(myuReceipt, "MYU");
+    if (degenReceipt?.status === 'success') handleMintSuccess(degenReceipt, "DEGEN");
+  }, [ethReceipt, myuReceipt, degenReceipt]);
 
   const needsMyuApproval = myuAllowance < ((mintInfo?.myuPrice ?? 0n) * BigInt(mintAmount));
   const needsDegenApproval = degenAllowance < ((mintInfo?.degenPrice ?? 0n) * BigInt(mintAmount));
-
-  // Robust booleans
   const soldOut = !!(mintInfo && mintInfo.remainingMints <= 0);
   const userMaxed = !!(mintInfo && mintInfo.userMints >= 500);
-
-  // Show static tier image if available
   const tierNum = mintInfo?.currentTierNum ?? 0;
   const tierImage = TIER_IMAGES[tierNum] || null;
 
@@ -136,23 +174,20 @@ export default function MintWidget() {
           <div className="mb-2"><strong>Remaining:</strong> {mintInfo.remainingMints.toLocaleString()}</div>
           <div className="mb-2"><strong>Current Tier:</strong> {tierNum}</div>
           {tierImage && (
-            <div className="tier-image-container" style={{ width: '320px', height: '80px', marginBottom: '1rem' }}>
-              <Image 
-                src={tierImage} 
+            <div className="tier-image-container" style={{ width: '320px', height: '80px', marginBottom: '1rem', position: 'relative' }}>
+              <Image
+                src={tierImage}
                 alt={`Tier ${tierNum}`}
-                style={{ 
-                  width: '100%', 
-                  height: '100%', 
+                width={320}
+                height={80}
+                style={{
                   objectFit: 'contain'
                 }}
-                onError={(e) => {
-                  console.error(`Failed to load tier image for tier ${tierNum}:`, e);
-                }}
-		priority
+                priority
               />
             </div>
           )}
-            <div className="mb-2">
+          <div className="mb-2">
             <strong>Price per Mint:</strong>
             <ul>
               <li>ETH: {formatEther(mintInfo.ethPrice)} ETH</li>
@@ -160,6 +195,22 @@ export default function MintWidget() {
               <li>DEGEN: {formatTokenDisplay(mintInfo.degenPrice, TOKENS.DEGEN.decimals, 0)} DEGEN</li>
             </ul>
           </div>
+
+          {/* Payment Split Info */}
+          {splitInfo && (
+            <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-sm">
+              <div className="flex items-start">
+                <span className="text-blue-600 dark:text-blue-400 mr-2">ℹ️</span>
+                <div>
+                  <strong className="text-blue-900 dark:text-blue-300">Payment Split:</strong>
+                  <p className="text-blue-800 dark:text-blue-400 mt-1">
+                    Your payment will be split: {splitInfo.vaultPct}% to vault, {splitInfo.sendPct}% to developer.
+                    Your wallet may show multiple transfers.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       ) : (
         <div className="mb-2 text-red-500">No mint info available</div>
@@ -289,6 +340,22 @@ export default function MintWidget() {
           Connect your wallet to mint!
         </div>
       )}
+
+      <MintSuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        tokenIds={mintedTokenIds}
+        txHash={lastMintTxHash}
+        paymentMethod={lastPaymentMethod}
+        totalPaid={
+          lastPaymentMethod === "ETH"
+            ? formatEther((mintInfo?.ethPrice ?? 0n) * BigInt(mintAmount))
+            : lastPaymentMethod === "MYU"
+            ? formatTokenDisplay((mintInfo?.myuPrice ?? 0n) * BigInt(mintAmount), TOKENS.MYU.decimals, 0)
+            : formatTokenDisplay((mintInfo?.degenPrice ?? 0n) * BigInt(mintAmount), TOKENS.DEGEN.decimals, 0)
+        }
+        prerevealImage={TIER_IMAGES[mintInfo?.currentTierNum ?? 0] || undefined}
+      />
     </div>
   );
 }
