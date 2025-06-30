@@ -6,6 +6,7 @@ import { sdk } from "@farcaster/frame-sdk";
 import { MiniAppWagmiProvider } from "@/components/MiniAppWagmiProvider";
 import { MintFrameButton } from "@/components/MintFrameButton";
 import { Frame } from "@/components/Frame";
+import { FungalLeaderboard } from "@/components/FungalLeaderboard";
 
 const FRAME_URL = process.env.NEXT_PUBLIC_FRAME_URL || "/api/frame";
 
@@ -13,6 +14,7 @@ export default function FrameLandingPage() {
   const [isMiniApp, setIsMiniApp] = useState(false);
   const [fid, setFid] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   useEffect(() => {
     const link = document.createElement("link");
@@ -69,6 +71,20 @@ export default function FrameLandingPage() {
             You are in the Mini-App. Mint below!
           </p>
           <MintFrameButton />
+          
+          {/* Add toggle for leaderboard */}
+          <button
+            className="btn-cyber mt-4"
+            onClick={() => setShowLeaderboard(!showLeaderboard)}
+          >
+            {showLeaderboard ? "Hide" : "Show"} Leaderboard
+          </button>
+          
+          {showLeaderboard && (
+            <div className="mt-6 card">
+              <FungalLeaderboard />
+            </div>
+          )}
         </Frame>
       </MiniAppWagmiProvider>
     );
@@ -119,6 +135,20 @@ export default function FrameLandingPage() {
         Mint in Farcaster
       </a>
       <MintFrameButton />
+      
+      {/* Add toggle for leaderboard */}
+      <button
+        className="btn-cyber mt-4"
+        onClick={() => setShowLeaderboard(!showLeaderboard)}
+      >
+        {showLeaderboard ? "Hide" : "Show"} Leaderboard
+      </button>
+      
+      {showLeaderboard && (
+        <div className="mt-6 card">
+          <FungalLeaderboard />
+        </div>
+      )}
     </Frame>
   );
 }

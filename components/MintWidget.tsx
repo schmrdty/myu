@@ -9,6 +9,7 @@ import { useSplitInfo } from "@/hooks/useSplitInfo";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { NFT_ABI, ERC20_ABI, CONTRACT_ADDRESS, TOKENS } from "@/lib/constants";
 import { MintSuccessModal } from "@/components/MintSuccessModal";
+import { LuckyMintTracker } from "@/components/LuckyMintTracker";
 
 const MINT_OPTIONS = [1, 5, 10, 20, 50, 100, 500];
 
@@ -52,6 +53,18 @@ export default function MintWidget() {
   const { data: ethReceipt } = useWaitForTransactionReceipt({ hash: ethMintHash });
   const { data: myuReceipt } = useWaitForTransactionReceipt({ hash: myuMintHash });
   const { data: degenReceipt } = useWaitForTransactionReceipt({ hash: degenMintHash });
+
+  useEffect(() => {
+    if (splitInfo) {
+      console.log('🔍 DEBUG MintWidget: Split info received:', splitInfo);
+      console.log('🔍 DEBUG MintWidget: Send %:', splitInfo.sendPct);
+      console.log('🔍 DEBUG MintWidget: Vault %:', splitInfo.vaultPct);
+      // Validation check
+      if (splitInfo.sendPct + splitInfo.vaultPct !== 100) {
+        console.warn('⚠️ WARNING: Split percentages do not add up to 100%:', splitInfo);
+      }
+    }
+  }, [splitInfo]);
 
   useEffect(() => {
     const handleMintSuccess = (
@@ -149,7 +162,7 @@ export default function MintWidget() {
   }
 
   return (
-    <div className="card" style={{ maxWidth: 420, margin: "0 auto" }}>
+    <div className="card" style={{ maxWidth: 450, margin: "0 auto" }}>
       <h2 className="cyberpunk text-2xl mb-4">Mint Myutruvian NFT</h2>
       {loadingMint ? (
         <div className="mb-2">Loading mint info...</div>
@@ -326,7 +339,11 @@ export default function MintWidget() {
             ? formatTokenDisplay((mintInfo?.myuPrice ?? 0n) * BigInt(mintAmount), TOKENS.MYU.decimals, 0)
             : formatTokenDisplay((mintInfo?.degenPrice ?? 0n) * BigInt(mintAmount), TOKENS.DEGEN.decimals, 0)
         }
+        splitInfo={splitInfo}
       />
+      <div className="mt-8 pt-6 border-t border-gray-300 dark:border-gray-700">
+        <LuckyMintTracker />
+      </div>
     </div>
   );
 }

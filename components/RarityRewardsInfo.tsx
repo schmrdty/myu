@@ -1,0 +1,129 @@
+import { useState, useEffect } from "react";
+import { useAccount, useReadContract } from "wagmi";
+import { CONTRACT_ADDRESS, NFT_ABI } from "@/lib/constants";
+
+interface RarityTier {
+  name: string;
+  colorLight: string;
+  colorDark: string;
+  bgColor: string;
+  percentage: number;
+  poolShareMultiplier: number;
+}
+
+const RARITY_TIERS: RarityTier[] = [
+  {
+    name: "Legendary",
+    colorLight: "text-yellow-700",
+    colorDark: "dark:text-yellow-400",
+    bgColor: "bg-yellow-600",
+    percentage: 5,
+    poolShareMultiplier: 10,
+  },
+  {
+    name: "Epic",
+    colorLight: "text-purple-700",
+    colorDark: "dark:text-purple-400",
+    bgColor: "bg-purple-600",
+    percentage: 15,
+    poolShareMultiplier: 5,
+  },
+  {
+    name: "Rare",
+    colorLight: "text-blue-700",
+    colorDark: "dark:text-blue-400",
+    bgColor: "bg-blue-600",
+    percentage: 20,
+    poolShareMultiplier: 3,
+  },
+  {
+    name: "Uncommon",
+    colorLight: "text-green-700",
+    colorDark: "dark:text-green-400",
+    bgColor: "bg-green-600",
+    percentage: 25,
+    poolShareMultiplier: 2,
+  },
+  {
+    name: "Common",
+    colorLight: "text-gray-700",
+    colorDark: "dark:text-gray-400",
+    bgColor: "bg-gray-600",
+    percentage: 35,
+    poolShareMultiplier: 1,
+  },
+];
+
+export function RarityRewardsInfo() {
+  const { address } = useAccount();
+  const [userNFTs, setUserNFTs] = useState<number>(0);
+
+  const { data: nftBalance } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: NFT_ABI,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+  });
+
+  useEffect(() => {
+    if (nftBalance) {
+      setUserNFTs(Number(nftBalance));
+    }
+  }, [nftBalance]);
+
+  return (
+    <div className="rarity-rewards-info">
+      <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Rarity-Based Rewards</h2>
+
+      <div className="mb-6 p-4 bg-blue-100 dark:bg-blue-900/30 border border-blue-600 dark:border-blue-500 rounded-lg">
+        <h3 className="font-bold mb-2 text-gray-900 dark:text-gray-100">How It Works:</h3>
+        <ul className="space-y-1 text-sm text-gray-800 dark:text-gray-200">
+          <li>• NFT rarities will determine your share of future liquidity pool rewards</li>
+          <li>• Each rarity will split the same amount of tokens</li>
+          <li>• Planned V4 hooks will enable automatic distribution</li>
+          <li>• Keep in mind that although more nfts = more tokens</li>
+	  <li>• Equity distribution as well as support are foundations of Myceliyou</li>
+        </ul>
+        <p className="mt-2 text-xs text-gray-700 dark:text-gray-300">
+          Note: Reward distribution system is in development and will be implemented asap.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <h3 className="font-bold text-gray-900 dark:text-gray-100">Rarity Tiers & Reward Multipliers:</h3>
+        {RARITY_TIERS.map((tier) => (
+          <div
+            key={tier.name}
+            className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600"
+          >
+            <div className="flex items-center">
+              <div className={`w-4 h-4 rounded-full mr-3 ${tier.bgColor}`} />
+              <div>
+                <span className={`font-bold ${tier.colorLight} ${tier.colorDark}`}>{tier.name}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300 ml-2">
+                  ({tier.percentage}% of supply)
+                </span>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="font-bold text-gray-900 dark:text-gray-100">{tier.poolShareMultiplier}x rewards</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {userNFTs > 0 && (
+        <div className="mt-6 p-4 bg-green-100 dark:bg-green-900/30 border border-green-600 dark:border-green-500 rounded-lg">
+          <h3 className="font-bold mb-2 text-gray-900 dark:text-gray-100">Your Holdings:</h3>
+          <p className="text-sm text-gray-800 dark:text-gray-200">
+            You own <strong className="text-gray-900 dark:text-white">{userNFTs}</strong> NFT{userNFTs > 1 ? "s" : ""}.
+            Mint more to increase your potential rewards!
+          </p>
+          <p className="text-xs text-gray-700 dark:text-gray-300 mt-2">
+            Note: This is not financial advice.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -10,6 +10,7 @@ interface MintSuccessModalProps {
   paymentMethod: "ETH" | "MYU" | "DEGEN";
   totalPaid: string;
   prerevealImage?: string;
+  splitInfo?: { sendPct: number; vaultPct: number } | null;
 }
 
 export function MintSuccessModal({
@@ -20,6 +21,7 @@ export function MintSuccessModal({
   paymentMethod,
   totalPaid,
   prerevealImage = "/placeholder-nft.png",
+  splitInfo,
 }: MintSuccessModalProps) {
   const [copied, setCopied] = useState(false);
 
@@ -29,6 +31,13 @@ export function MintSuccessModal({
       return () => clearTimeout(timer);
     }
   }, [copied]);
+
+  useEffect(() => {
+    if (isOpen && splitInfo) {
+      console.log('🔍 DEBUG Modal: Rendering with split info:', splitInfo);
+      console.log('🔍 DEBUG Modal: Total paid:', totalPaid, paymentMethod);
+    }
+  }, [isOpen, splitInfo, totalPaid, paymentMethod]);
 
   if (!isOpen) return null;
 
@@ -73,7 +82,7 @@ export function MintSuccessModal({
                 />
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                Pre-reveal image (Your unique NFT will be revealed soon!)
+                Pre-reveal image (Your unique NFT will be revealed at mint out!)
               </p>
             </div>
           )}
@@ -92,7 +101,7 @@ export function MintSuccessModal({
             </div>
           </div>
 
-          {/* Payment Summary */}
+          {/* Payment Summary with Split Info */}
           <div className="mb-4 bg-gray-50 dark:bg-gray-700 p-3 rounded">
             <p className="text-sm">
               <strong>Total Paid:</strong> {totalPaid} {paymentMethod}
@@ -100,6 +109,19 @@ export function MintSuccessModal({
             <p className="text-sm">
               <strong>NFTs Minted:</strong> {tokenIds.length}
             </p>
+            {splitInfo && (
+              <div className="mt-2 pt-2 border-t border-gray-300 dark:border-gray-600">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  <strong>Payment Distribution:</strong>
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  • {splitInfo.vaultPct}% to Community Vault
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  • {splitInfo.sendPct}% to Development Fund
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Links */}

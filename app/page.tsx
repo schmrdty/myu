@@ -13,7 +13,11 @@ import MintWidget from "@/components/MintWidget";
 import { Docs } from "@/components/Docs";
 import { ConnectWalletButton } from "@/components/ConnectWalletButton";
 import { useChainGuard } from "@/hooks/useChainGuard";
-import { useFrameContext } from "@/hooks/useFrameContext"; // (see below for implementation)
+import { useFrameContext } from "@/hooks/useFrameContext";
+import { AchievementSystem } from "@/components/AchievementSystem";
+import { FungalLeaderboard } from "@/components/FungalLeaderboard";
+import { LuckyMintTracker } from "@/components/LuckyMintTracker";
+import { RarityRewardsInfo } from "@/components/RarityRewardsInfo";
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
@@ -108,6 +112,15 @@ export default function App() {
         >
           <strong>Mint</strong>
         </button>
+        <button
+          className={`tab-btn${activeTab === "Spore Board+" ? " active" : ""}`}
+          onClick={() => setActiveTab("Spore Board+")}
+          role="tab"
+          aria-selected={activeTab === "Spore Board+"}
+          tabIndex={activeTab === "Spore Board+" ? 0 : -1}
+        >
+          Spore Board+
+        </button>
       </nav>
 
       <main className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -140,6 +153,31 @@ export default function App() {
             {chainError && (
               <div className="mt-4 text-red-600">{chainError}</div>
             )}
+          </div>
+        )}
+        {activeTab === "Spore Board+" && (
+          <div className="w-full max-w-6xl">
+            <div className="space-y-8">
+              {/* Achievement System */}
+              <div className="card">
+                <AchievementSystem />
+              </div>
+              
+              {/* Leaderboard */}
+              <div className="card">
+                <FungalLeaderboard />
+              </div>
+              
+              {/* Lucky Mint Tracker */}
+              <div className="card">
+                <LuckyMintTracker />
+              </div>
+              
+              {/* Rarity Rewards Info */}
+              <div className="card">
+                <RarityRewardsInfo />
+              </div>
+            </div>
           </div>
         )}
       </main>
