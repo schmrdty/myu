@@ -333,7 +333,7 @@ export function LuckyMintTracker() {
         </div>
       </div>
 
-      <div className="mb-6 p-4 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-600 dark:border-yellow-500 rounded-lg">
+      <div className="mb-6 p-4 bg-yellow-100 dark:bg-yellow-100/30 border border-yellow-600 dark:border-yellow-500 rounded-lg">
         <h3 className="font-bold mb-2 text-cyber-text-main">🎲 Lucky Mint Rules:</h3>
         <ul className="space-y-1 text-sm text-cyber-text-main">
           <li>• 20 random minters get <strong>500 $DEGEN + 5,000,000 $MYU</strong></li>
@@ -341,7 +341,7 @@ export function LuckyMintTracker() {
           <li>• VRF powered by <a href="https://drand.love" target="_blank" rel="noopener noreferrer" className="text-cyber-primary hover:text-cyber-hover hover:underline">drand.love</a></li>
           <li>• Prizes distributed after mint completion for fairness!</li>
         </ul>
-        <p className="mt-2 text-xs text-cyber-text-muted">
+        <p className="mt-2 text-sm text-cyber-text-muted">
           Note: Winners selected using verifiable randomness from drand beacon
           {drandRound && ` (Round #${drandRound})`}
           {verificationStatus === 'verified' && ' ✅ Verified'}
@@ -350,7 +350,7 @@ export function LuckyMintTracker() {
 
       {error && (
         <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-600 dark:border-red-500 rounded-lg">
-          <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+          <p className="text-sm text-red-800 dark:text-red-800">{error}</p>
         </div>
       )}
 

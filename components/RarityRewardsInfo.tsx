@@ -77,14 +77,14 @@ export function RarityRewardsInfo() {
 
       <div className="mb-6 p-4 bg-blue-100 dark:bg-blue-900/30 border border-blue-600 dark:border-blue-500 rounded-lg">
         <h3 className="font-bold mb-2 text-gray-900 dark:text-gray-100">How It Works:</h3>
-        <ul className="space-y-1 text-sm text-gray-800 dark:text-gray-200">
+        <ul className="space-y-1 text-md text-gray-800 dark:text-gray-200">
           <li>• NFT rarities will determine your share of future liquidity pool rewards</li>
           <li>• Each rarity will split the same amount of tokens</li>
           <li>• Planned V4 hooks will enable automatic distribution</li>
           <li>• Keep in mind that although more nfts = more tokens</li>
 	  <li>• Equity distribution as well as support are foundations of Myceliyou</li>
         </ul>
-        <p className="mt-2 text-xs text-gray-700 dark:text-gray-300">
+        <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
           Note: Reward distribution system is in development and will be implemented asap.
         </p>
       </div>

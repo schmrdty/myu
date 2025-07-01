@@ -156,30 +156,30 @@ export function AchievementSystem() {
             key={achievement.id}
             className={`achievement-card p-4 rounded-lg border-2 transition-all ${
               achievement.unlocked
-                ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                ? "border-green-500 bg-green-50 dark:bg-green-50/20"
                 : "border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50"
             }`}
           >
             <div className="mb-2">
               <h3 className="font-bold text-lg">{achievement.title}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-md text-gray-600 dark:text-gray-600">
                 {achievement.description}
               </p>
             </div>
 
             <div className="mt-3 space-y-1">
               {achievement.requirements.nfts && (
-                <div className="text-sm">
+                <div className="text-md">
                   <span className="font-medium">NFTs:</span>{" "}
-                  <span className={achievement.unlocked ? "text-green-600" : ""}>
+                  <span className={achievement.unlocked ? "text-gray-600" : ""}>
                     {achievement.progress?.nfts || 0} / {achievement.requirements.nfts}
                   </span>
                 </div>
               )}
               {achievement.requirements.myu && (
-                <div className="text-sm">
+                <div className="text-md">
                   <span className="font-medium">$MYU:</span>{" "}
-                  <span className={achievement.unlocked ? "text-green-600" : ""}>
+                  <span className={achievement.unlocked ? "text-gray-600" : ""}>
                     {Number(achievement.progress?.myu || 0).toLocaleString()} /{" "}
                     {Number(
                       formatUnits(achievement.requirements.myu, TOKENS.MYU.decimals)
@@ -190,7 +190,7 @@ export function AchievementSystem() {
             </div>
 
             {achievement.unlocked && (
-              <div className="mt-3 text-green-600 font-bold text-sm">
+              <div className="mt-3 text-green-600 font-bold text-md">
                 ✓ UNLOCKED
               </div>
             )}
