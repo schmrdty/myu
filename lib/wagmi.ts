@@ -30,25 +30,21 @@ export function getConfig() {
   const connectors = isFrame()
     ? [
         farcasterFrame(), 
-        // ✅ Simple injected without target object
         injected({
           shimDisconnect: true,
         }), 
         coinbaseWallet({ 
           appName: appMetadata.name,
           appLogoUrl: appMetadata.icons[0],
-          // ✅ REMOVED smartWalletOnly - this was blocking browser wallets!
         })
       ]
     : [
-        // ✅ Standard injected connector that works with all wallets
         injected({
           shimDisconnect: true,
         }),
         coinbaseWallet({ 
           appName: appMetadata.name,
           appLogoUrl: appMetadata.icons[0],
-          // ✅ Allow both smart wallets AND browser extension wallets
         }),
         ...(projectId ? [walletConnect({ 
           projectId, 
@@ -70,8 +66,8 @@ export function getConfig() {
         "https://base.llamarpc.com",
         {
           batch: true,
-          retryCount: 3,
-          retryDelay: 1000,
+          retryCount: 4,
+          retryDelay: 1111,
         }
       ),
     },

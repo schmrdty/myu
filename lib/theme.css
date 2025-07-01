@@ -7,7 +7,7 @@
 /* ---- LIGHT MODE: High contrast, easy on eyes ---- */
 :root {
   /* Primary colors with better contrast */
-  --cyber-primary: #0066cc;  /* Changed from #46f4ff - better contrast */
+  --cyber-primary: #10b981  /* Changed from #46f4ff - better contrast */
   --cyber-accent: #d97706;   /* Changed from #ffdc46 - more readable orange */
   --cyber-danger: #dc2626;   /* Changed from #ff2c8f - standard red */
   
@@ -29,7 +29,7 @@
   
   /* Interactive states */
   --cyber-hover: #0052a3;
-  --cyber-focus: #0066cc;
+  --cyber-focus: #10b981
   
   /* Fonts */
   --cyber-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
@@ -381,4 +381,57 @@ input[type="radio"], input[type="checkbox"] {
   .btn-cyber, .tab-btn, button {
     border: 1px solid black;
   }
+}
+/* Update the dropdown/modal specific styles */
+.wallet-modal, .dropdown,
+.bg-cyber-bg {
+  background: var(--cyber-bg) !important;
+  color: var(--cyber-text-main) !important;
+}
+
+.bg-cyber-bg-light {
+  background: var(--cyber-bg-light) !important;
+}
+
+.text-cyber-text-main {
+  color: var(--cyber-text-main) !important;
+}
+
+.border-cyber-border {
+  border-color: var(--cyber-border) !important;
+}
+
+/* Fix for Spore Board+ dark text on dark background */
+.dark .card h2,
+.dark .card h3,
+.dark .card p,
+.dark .card span,
+.dark .card div {
+  color: var(--cyber-text-main);
+}
+
+/* Ensure achievement cards have proper contrast */
+.dark .bg-gray-100 {
+  background: var(--cyber-bg-light);
+}
+
+.dark .text-gray-900 {
+  color: var(--cyber-text-main);
+}
+
+.dark .text-gray-700 {
+  color: var(--cyber-text-muted);
+}
+
+/* Fix dropdown visibility */
+.absolute.bg-white {
+  background: var(--cyber-bg);
+  color: var(--cyber-text-main);
+  border: 1px solid var(--cyber-border);
+}
+
+.dark .absolute.bg-gray-800 {
+  background: var(--cyber-bg-light);
+  color: var(--cyber-text-main);
+  border: 1px solid var(--cyber-border);
 }
