@@ -132,8 +132,8 @@ export function LuckyMintTracker() {
       );
 
       // Check if the super winner matches
-      const superWinner = winners.find(w => w.prize.degen === 2500);
-      const regularWinners = winners.filter(w => w.prize.degen === 250);
+      const superWinner = winners.find(w => w.prize.degen === 5000);
+      const regularWinners = winners.filter(w => w.prize.degen === 500);
 
       const superMatches = superWinner?.address === verifiedSelection.super;
       const regularCount = regularWinners.length === verifiedSelection.regular.length;
@@ -336,8 +336,8 @@ export function LuckyMintTracker() {
       <div className="mb-6 p-4 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-600 dark:border-yellow-500 rounded-lg">
         <h3 className="font-bold mb-2 text-gray-900 dark:text-gray-100">🎲 Lucky Mint Rules:</h3>
         <ul className="space-y-1 text-sm text-gray-800 dark:text-gray-200">
-          <li>• 20 random minters get <strong className="text-gray-900 dark:text-white">250 $DEGEN + 1,000,000 $MYU</strong></li>
-          <li>• 1 super lucky minter gets <strong className="text-gray-900 dark:text-white">2,500 $DEGEN + 25,000,000 $MYU</strong></li>
+          <li>• 20 random minters get <strong className="text-gray-900 dark:text-white">500 $DEGEN + 5,000,000 $MYU</strong></li>
+          <li>• 1 super lucky minter gets <strong className="text-gray-900 dark:text-white">5000 $DEGEN + 25,000,000 $MYU</strong></li>
           <li>• VRF powered by <a href="https://drand.love" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">drand.love</a></li>
           <li>• Prizes distributed after mint completion for fairness!</li>
         </ul>
@@ -394,8 +394,8 @@ export function LuckyMintTracker() {
               className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600 transition-all hover:shadow-md"
             >
               <div className="flex items-center">
-                <span className="text-2xl mr-3" role="img" aria-label={winner.prize.degen === 2500 ? "Super winner" : "Winner"}>
-                  {winner.prize.degen === 2500 ? "🏆" : "🎉"}
+                <span className="text-2xl mr-3" role="img" aria-label={winner.prize.degen === 5000 ? "Super winner" : "Winner"}>
+                  {winner.prize.degen === 5000 ? "🏆" : "🎉"}
                 </span>
                 <div>
                   <a
