@@ -1,0 +1,236 @@
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import { Icon } from "@/components/DemoComponents";
+
+interface MintSuccessModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  tokenIds: number[];
+  txHash: string;
+  paymentMethod: "ETH" | "MYU" | "DEGEN";
+  totalPaid: string;
+  prerevealImage?: string;
+  splitInfo?: { sendPct: number; vaultPct: number } | null;
+}
+
+export function MintSuccessModal({
+  isOpen,
+  onClose,
+  tokenIds,
+  txHash,
+  paymentMethod,
+  totalPaid,
+  prerevealImage = "/placeholder-nft.png",
+  splitInfo,
+}: MintSuccessModalProps) {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (copied) {
+      const timer = setTimeout(() => setCopied(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [copied]);
+
+  if (!isOpen) return null;
+
+  const handleCopyTokenIds = () => {
+    navigator.clipboard.writeText(tokenIds.join(", "));
+    setCopied(true);
+  };
+   useEffect(() => {
+    if (isOpen && splitInfo) {
+      console.log('🔍 DEBUG Modal: Rendering with split info:', splitInfo);
+      console.log('🔍 DEBUG Modal: Total paid:', totalPaid, paymentMethod);
+    }
+  }, [isOpen, splitInfo, totalPaid, paymentMethod]);
+
+  const baseScanUrl = `https://basescan.org/tx/${txHash}`;
+  const openseaUrl =
+    tokenIds.length === 1
+      ? `https://opensea.io/assets/base/0xc80577c2c0e860fc2935c809609fa46456cecc51/${tokenIds[0]}`
+      : "https://opensea.io/collection/myutruvian";
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex justify-between items-start mb-4">
+            <h2 className="text-2xl font-bold text-green-600 dark:text-green-400">
+              🎉 Mint Successful!
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <Icon name="plus" size="sm" />
+            </button>
+          </div>
+
+          {/* NFT Preview */}
+          {prerevealImage && (
+            <div className="mb-6 text-center">
+              <div className="inline-block rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-600">
+                <Image
+                  src={prerevealImage}
+                  alt="Pre-reveal NFT"
+                  width={200}
+                  height={200}
+                  className="object-cover"
+                />
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                Pre-reveal image (Your unique NFT will be revealed at mint out!)
+              </p>
+            </div>
+          )}
+
+          {/* Token IDs */}
+          <div className="mb-4">
+            <h3 className="font-semibold mb-2">Your NFT ID{tokenIds.length > 1 ? "s" : ""}:</h3>
+            <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 p-3 rounded">
+              <span className="font-mono text-lg">{tokenIds.join(", ")}</span>
+              <button
+                onClick={handleCopyTokenIds}
+                className="ml-auto text-sm bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+              >
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            </div>
+          </div>
+
+	            {/* Payment Summary with Split Info */}
+          <div className="mb-4 bg-gray-50 dark:bg-gray-700 p-3 rounded">
+            <p className="text-sm">
+              <strong>Total Paid:</strong> {totalPaid} {paymentMethod}
+            </p>
+            <p className="text-sm">
+              <strong>NFTs Minted:</strong> {tokenIds.length}
+            </p>
+            {splitInfo && (
+              <div className="mt-2 pt-2 border-t border-gray-300 dark:border-gray-600">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  <strong>Payment Distribution:</strong>
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  • {splitInfo.vaultPct}% to Community Vault
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  • {splitInfo.sendPct}% to Development Fund
+                </p>
+              </div>
+
+          {/* Payment Summary */}
+          <div className="mb-4 bg-gray-50 dark:bg-gray-700 p-3 rounded">
+            <p className="text-sm">
+              <strong>Total Paid:</strong> {totalPaid} {paymentMethod}
+            </p>
+            <p className="text-sm">
+              <strong>NFTs Minted:</strong> {tokenIds.length}
+            </p>
+          </div>
+
+          {/* Links */}
+          <div className="mb-6 space-y-2">
+            <a
+              href={baseScanUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center bg-blue-500 hover:bg-blue-600 text-white py-2 rounded"
+            >
+              View Transaction on BaseScan
+            </a>
+            <a
+              href={openseaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center bg-purple-500 hover:bg-purple-600 text-white py-2 rounded"
+            >
+              View on OpenSea
+            </a>
+          </div>
+
+          {/* OpenSea Instructions */}
+          <div className="border-t pt-4">
+            <h3 className="font-semibold mb-3">How to Refresh Metadata on OpenSea:</h3>
+            <ol className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+              <li className="flex">
+                <span className="mr-2 font-semibold">1.</span>
+                <span>Go to your NFT page on OpenSea using the link above</span>
+              </li>
+              <li className="flex">
+                <span className="mr-2 font-semibold">2.</span>
+                <span>Click the three dots (&hellip;) menu in the top right corner</span>
+              </li>
+              <li className="flex">
+                <span className="mr-2 font-semibold">3.</span>
+                <span>Select &quot;Refresh metadata&quot;</span>
+              </li>
+              <li className="flex">
+                <span className="mr-2 font-semibold">4.</span>
+                <span>Wait a few minutes for the metadata to update</span>
+              </li>
+              <li className="flex">
+                <span className="mr-2 font-semibold">5.</span>
+                <span>Refresh the page to see your revealed NFT!</span>
+              </li>
+            </ol>
+            <p className="mt-3 text-xs text-gray-600 dark:text-gray-400">
+              Note: It may take up to 30 minutes for metadata to fully update on OpenSea.
+            </p>
+          </div>
+
+          {/* OpenSea Hidden Folder Instructions */}
+          <div className="border-t pt-4 mt-4">
+            <h3 className="font-semibold mb-3">How to Check Your Hidden Folder on OpenSea:</h3>
+            <ol className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+              <li className="flex">
+                <span className="mr-2 font-semibold">1.</span>
+                <span>
+                  Visit{" "}
+                  <a
+                    href="https://opensea.io/account/hidden"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    Your Hidden Folder
+                  </a>{" "}
+                  on OpenSea.
+                </span>
+              </li>
+              <li className="flex">
+                <span className="mr-2 font-semibold">2.</span>
+                <span>Connect your wallet if prompted.</span>
+              </li>
+              <li className="flex">
+                <span className="mr-2 font-semibold">3.</span>
+                <span>
+                  Look for your newly minted NFT. If you find it, click the NFT&apos;s menu (three dots) and select &quot;Unhide&quot;.
+                </span>
+              </li>
+              <li className="flex">
+                <span className="mr-2 font-semibold">4.</span>
+                <span>
+                  After unhiding, your NFT will appear in your main collection.
+                </span>
+              </li>
+            </ol>
+            <p className="mt-3 text-xs text-gray-600 dark:text-gray-400">
+              Sometimes OpenSea automatically places new NFTs in your hidden folder to help prevent spam. If you don&apos;t see your NFT on your profile, check your hidden folder and unhide it.
+            </p>
+          </div>
+
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="w-full mt-6 bg-gray-800 hover:bg-gray-900 dark:bg-gray-600 dark:hover:bg-gray-700 text-white py-2 rounded"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,41 @@
+import { useReadContract } from "wagmi";
+import { CONTRACT_ADDRESS, NFT_ABI } from "@/lib/constants";
+
+/**
+ * Fetch the current payment split percentages from the contract
+ */
+export function useSplitInfo() {
+  console.log('🔍 DEBUG: Fetching split data from contract...');
+  const { data, isLoading, error } = useReadContract({
+    abi: NFT_ABI,
+    address: CONTRACT_ADDRESS,
+    functionName: "currentSplit",
+    query: {
+      staleTime: 300_000, // Cache for 5 minutes
+    },
+  });
+  console.log('🔍 DEBUG: Raw split from contract:', {
+    sendPct: split.sendPct,
+    vaultPct: split.vaultPct,
+    sendPctType: typeof split.sendPct,
+    vaultPctType: typeof split.vaultPct
+  });
+  let splitInfo = null;
+  if (data && Array.isArray(data) && data.length >= 2) {
+    splitInfo = {
+      sendPct: Number(data[0]),
+      vaultPct: Number(data[1]),
+    };
+  }
+
+  console.log('🔍 DEBUG: BigNumber values:', {
+    sendPct: split.sendPct.toString(),
+    vaultPct: split.vaultPct.toString()
+  });
+
+  return {
+    loading: isLoading,
+    error: error ?? null,
+    data: splitInfo,
+  };
+}
