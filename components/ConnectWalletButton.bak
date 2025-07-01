@@ -1,65 +1,122 @@
 // Location: /components/ConnectWalletButton.tsx
 
-"use client";
-import { useState } from "react";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
-import { Button } from "@/components/DemoComponents";
-import { useFrameContext } from "@/hooks/useFrameContext";
+import { useState, useEffect } from 'react';
+import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
+import { base } from 'wagmi/chains';
 
 export function ConnectWalletButton() {
-  const { isConnected, address } = useAccount();
-  const { connect, connectors, error, status } = useConnect();
+  const { address, isConnected, connector } = useAccount();
+  const { connect, connectors, isPending, error } = useConnect();
   const { disconnect } = useDisconnect();
-  const [showWallets, setShowWallets] = useState(false);
-  const [pendingId, setPendingId] = useState<string | null>(null);
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Hide connect button in Farcaster frames for best UX
-  const { isFrame } = useFrameContext?.() || { isFrame: false };
-  if (isFrame) {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // ✅ Auto-switch to Base if on wrong chain
+  useEffect(() => {
+    if (isConnected && chainId !== base.id && switchChain) {
+      switchChain({ chainId: base.id });
+    }
+  }, [isConnected, chainId, switchChain]);
+
+  // Don't render until mounted (avoids hydration issues)
+  if (!mounted) return null;
+
+  const formatAddress = (addr: string) => {
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
+  // ✅ Better wallet name detection
+  const getWalletName = (connector: typeof connectors[0]) => {
+    // Special handling for injected wallets
+    if (connector.id === 'injected') {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        // Check for specific wallets
+        if ((window.ethereum as any).isRabby) return 'Rabby';
+        if ((window.ethereum as any).isMetaMask) return 'MetaMask';
+        if ((window.ethereum as any).isBraveWallet) return 'Brave';
+        if ((window.ethereum as any).isRainbow) return 'Rainbow';
+      }
+      return 'Browser Wallet';
+    }
+    return connector.name;
+  };
+
+  if (isConnected && address) {
     return (
-      <div className="text-muted text-center text-sm py-2">
-	Wallet connection is handled by Farcaster in frames!
+      <div className="relative">
+        <button
+          onClick={() => setShowDropdown(!showDropdown)}
+          className="btn-cyber text-sm"
+        >
+          {formatAddress(address)}
+          {connector && ` (${getWalletName(connector)})`}
+        </button>
+        
+        {showDropdown && (
+          <div className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 min-w-[200px] z-50">
+            <button
+              onClick={() => {
+                disconnect();
+                setShowDropdown(false);
+              }}
+              className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            >
+              Disconnect
+            </button>
+            {chainId !== base.id && switchChain && (
+              <button
+                onClick={() => switchChain({ chainId: base.id })}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-yellow-600"
+              >
+                Switch to Base
+              </button>
+            )}
+          </div>
+        )}
       </div>
     );
   }
 
-  if (isConnected && address) {
-    return (
-      <Button variant="secondary" onClick={disconnect}>
-        {address.slice(0, 6)}...{address.slice(-4)} (Disconnect)
-      </Button>
-    );
-  }
-
   return (
-    <div style={{ position: "relative" }}>
-      <Button variant="primary" onClick={() => setShowWallets((v) => !v)}>
-        Connect Wallet
-      </Button>
-      {showWallets && (
-        <div className="wallet-modal bg-cyberglass border border-cyber-primary rounded-lg p-4 mt-2 z-10">
+    <div className="relative">
+      <button
+        onClick={() => setShowDropdown(!showDropdown)}
+        disabled={isPending}
+        className="btn-cyber text-sm"
+      >
+        {isPending ? 'Connecting...' : 'Connect Wallet'}
+      </button>
+
+      {error && (
+        <div className="absolute top-full mt-2 right-0 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-lg p-2 text-xs max-w-xs">
+          {error.message}
+        </div>
+      )}
+      
+      {showDropdown && !isPending && (
+        <div className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 min-w-[200px] z-50">
           {connectors.map((connector) => (
-            <Button
+            <button
               key={connector.id}
-              className="w-full mb-2"
               onClick={() => {
-                setPendingId(connector.id);
-                connect({ connector });
-                setShowWallets(false);
+                connect({ connector, chainId: base.id });
+                setShowDropdown(false);
               }}
               disabled={!connector.ready}
-              variant="outline"
+              className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {status === "pending" && pendingId === connector.id
-                ? "Connecting..."
-                : connector.name}
-            </Button>
+              <span>{getWalletName(connector)}</span>
+              {connector.ready === false && (
+                <span className="text-xs text-gray-500">Not installed</span>
+              )}
+            </button>
           ))}
-          {error && (
-            <div className="text-red-500 px-2 py-1 text-xs">
-              {error.message}
-            </div>
-          )}
         </div>
       )}
     </div>

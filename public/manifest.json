@@ -1,0 +1,21 @@
+{
+  "name": "Myutruvian NFT Platform",
+  "short_name": "Myutruvian",
+  "description": "Mint your Myutruvian NFT on Base",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#46f4ff",
+  "icons": [
+    {
+      "src": "/myu-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/myu-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

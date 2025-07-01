@@ -6,16 +6,20 @@ import { MushroomIcon, CyberSunIcon } from "@/components/DemoComponents";
 export function ThemeToggle() {
   const { theme, setTheme, resolvedTheme } = useTheme();
 
-  // 🌑 = moon, 🍄 = mushroom, ⚡️ = cyber sun, ☀️ = sun
   return (
     <button
-      className="ml-2 rounded-full px-3 py-1 bg-cyberglass border border-cyber-primary text-cyber hover:bg-cyber-primary hover:text-black transition"
-      aria-label="Toggle color theme"
-      title="Toggle theme (Ctrl/Cmd+J)"
+      className="p-2 rounded-lg bg-cyberglass border-2 border-cyber-border hover:border-cyber-primary transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyber-primary focus:ring-offset-2"
+      aria-label={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} theme`}
+      title={`Currently ${resolvedTheme} theme (Ctrl/Cmd+J to toggle)`}
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       type="button"
     >
-      {resolvedTheme === "dark" ? <MushroomIcon size={22} /> : <CyberSunIcon size={22} />}
+      <span className="sr-only">Toggle theme</span>
+      {resolvedTheme === "dark" ? (
+        <MushroomIcon size={20} className="text-cyber-accent" aria-hidden="true" />
+      ) : (
+        <CyberSunIcon size={20} className="text-cyber-primary" aria-hidden="true" />
+      )}
     </button>
   );
 }

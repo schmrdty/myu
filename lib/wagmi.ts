@@ -20,16 +20,44 @@ export function getConfig() {
 
   const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!;
   
+  const appMetadata = {
+    name: "Myutruvian",
+    description: "Mint your Myutruvian NFT on Base - A decentralized creative ecosystem",
+    url: process.env.NEXT_PUBLIC_HOST || "https://myu.schmidtiest.xyz",
+    icons: [`${process.env.NEXT_PUBLIC_HOST || "https://myu.schmidtiest.xyz"}/icon.png`]
+  };
+
   const connectors = isFrame()
     ? [
         farcasterFrame(), 
-        injected(), 
-        coinbaseWallet({ appName: "Myutruvian", preference: "smartWalletOnly" })
+        // ✅ Simple injected without target object
+        injected({
+          shimDisconnect: true,
+        }), 
+        coinbaseWallet({ 
+          appName: appMetadata.name,
+          appLogoUrl: appMetadata.icons[0],
+          // ✅ REMOVED smartWalletOnly - this was blocking browser wallets!
+        })
       ]
     : [
-        injected(), 
-        coinbaseWallet({ appName: "Myutruvian", preference: "smartWalletOnly" }),
-        ...(projectId ? [walletConnect({ projectId, showQrModal: true })] : [])
+        // ✅ Standard injected connector that works with all wallets
+        injected({
+          shimDisconnect: true,
+        }),
+        coinbaseWallet({ 
+          appName: appMetadata.name,
+          appLogoUrl: appMetadata.icons[0],
+          // ✅ Allow both smart wallets AND browser extension wallets
+        }),
+        ...(projectId ? [walletConnect({ 
+          projectId, 
+          showQrModal: true,
+          metadata: appMetadata,
+          qrModalOptions: {
+            themeMode: 'dark',
+          }
+        })] : [])
       ];
 
   config = createConfig({
@@ -39,13 +67,19 @@ export function getConfig() {
       [base.id]: http(
         process.env.NEXT_PUBLIC_BASE_RPC_URL || 
         process.env.NEXT_PUBLIC_RU2 ||
-        `https://base-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`
+        "https://base.llamarpc.com",
+        {
+          batch: true,
+          retryCount: 3,
+          retryDelay: 1000,
+        }
       ),
     },
     storage: createStorage({
       storage: cookieStorage,
     }),
     ssr: true,
+    syncConnectedChain: true,
   });
 
   return config;
