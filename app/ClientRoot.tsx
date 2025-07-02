@@ -4,15 +4,19 @@
 
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Providers } from "./providers";
-import { FrameProvider } from "@/hooks/useFrameContext";
+import { MiniAppProvider } from "@/hooks/useMiniAppContext";
+import { ToastProvider } from "@/components/ToastProvider";
 import { ReactNode } from "react";
 
 export default function ClientRoot({ children }: { children: ReactNode }) {
   return (
     <Providers>
-      <FrameProvider>
-        <ThemeProvider>{children}</ThemeProvider>
-      </FrameProvider>
+      <MiniAppProvider>
+        <ThemeProvider>
+          <ToastProvider />
+          {children}
+        </ThemeProvider>
+      </MiniAppProvider>
     </Providers>
   );
 }

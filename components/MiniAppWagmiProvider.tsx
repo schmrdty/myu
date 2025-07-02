@@ -4,8 +4,8 @@
 import { useEffect, useState } from "react";
 import { WagmiProvider, createConfig, http } from "wagmi";
 import { base } from "wagmi/chains";
-import { farcasterFrame } from "@farcaster/frame-wagmi-connector";
-import { sdk } from "@farcaster/frame-sdk";
+import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
+import { sdk } from "@farcaster/miniapp-sdk";
 import { getConfig as getWebConfig } from "@/lib/wagmi";
 
 // Provides the correct wagmi config for web or Farcaster Mini App.
@@ -19,7 +19,7 @@ export function MiniAppWagmiProvider({ children }: { children: React.ReactNode }
         setConfig(
           createConfig({
             chains: [base],
-            connectors: [farcasterFrame()],
+            connectors: [farcasterMiniApp()],
             transports: {
               [base.id]: http(process.env.NEXT_PUBLIC_BASE_RPC_URL),
             },

@@ -1,16 +1,16 @@
-// Location: /app/frame/page.tsx
+// Location: /app/miniapp/page.tsx
 
 "use client";
 import { useEffect, useState } from "react";
-import { sdk } from "@farcaster/frame-sdk";
+import { sdk } from "@farcaster/miniapp-sdk";
 import { MiniAppWagmiProvider } from "@/components/MiniAppWagmiProvider";
-import { MintFrameButton } from "@/components/MintFrameButton";
-import { Frame } from "@/components/Frame";
+import { MintMiniAppButton } from "@/components/MintMiniAppButton";
+import { MiniApp } from "@/components/MiniApp";
 import { FungalLeaderboard } from "@/components/FungalLeaderboard";
 
-const FRAME_URL = process.env.NEXT_PUBLIC_FRAME_URL || "/api/frame";
+const FRAME_URL = process.env.NEXT_PUBLIC_FRAME_URL || "/api/minidapp";
 
-export default function FrameLandingPage() {
+export default function MiniAppLandingPage() {
   const [isMiniApp, setIsMiniApp] = useState(false);
   const [fid, setFid] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,24 +53,24 @@ export default function FrameLandingPage() {
 
   if (loading) {
     return (
-      <Frame>
+      <MiniApp>
         <div className="flex flex-col items-center py-12">
           <div className="cyberpunk text-xl mb-4">Loading Farcaster...</div>
         </div>
-      </Frame>
+      </MiniApp>
     );
   }
 
-  // Mini App (Farcaster/Frame) UI
+  // Mini App (Farcaster/MiniApp) UI
   if (isMiniApp) {
     return (
       <MiniAppWagmiProvider>
-        <Frame>
+        <MiniApp>
           <h1 className="cyberpunk text-3xl mb-6">Mint via Farcaster Frame</h1>
           <p className="mb-4 text-lg text-muted">
             You are in the Mini-App. Mint below!
           </p>
-          <MintFrameButton />
+          <MintMiniAppButton />
           
           {/* Add toggle for leaderboard */}
           <button
@@ -85,15 +85,15 @@ export default function FrameLandingPage() {
               <FungalLeaderboard />
             </div>
           )}
-        </Frame>
+        </MiniApp>
       </MiniAppWagmiProvider>
     );
   }
 
   // Web UI (desktop/mobile browser)
   return (
-    <Frame>
-      <h1 className="cyberpunk text-3xl mb-6">Mint via Farcaster Frame</h1>
+    <MiniApp>
+      <h1 className="cyberpunk text-3xl mb-6">Mint via Farcaster MiniApp</h1>
       <p className="mb-3 text-lg text-muted">
         Sign in with Farcaster to mint!
       </p>
@@ -134,7 +134,7 @@ export default function FrameLandingPage() {
       >
         Mint in Farcaster
       </a>
-      <MintFrameButton />
+      <MintMiniAppButton />
       
       {/* Add toggle for leaderboard */}
       <button
@@ -149,6 +149,6 @@ export default function FrameLandingPage() {
           <FungalLeaderboard />
         </div>
       )}
-    </Frame>
+    </MiniApp>
   );
 }

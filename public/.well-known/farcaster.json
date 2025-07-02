@@ -1,13 +1,13 @@
 {
-  "frame": {
-    "name": "Myutruvian NFT",
+  "miniapp": {
+    "name": "Myutruvian",
     "version": "1",
-    "iconUrl": "https://myu.schmidtiest.xyz/myu.png",
+    "iconUrl": "https://myu.schmidtiest.xyz/myu1k.png",
     "homeUrl": "https://myu.schmidtiest.xyz",
     "imageUrl": "https://myu.schmidtiest.xyz/myu.png",
     "buttonTitle": "digIn",
     "splashImageUrl": "https://myu.schmidtiest.xyz/myu1k.png",
-    "splashBackgroundColor": "#39ff14",
+    "splashBackgroundColor": "#00eaff",
     "webhookUrl": "https://myu.schmidtiest.xyz/api/webhook",
     "subtitle": "Mint peep grow",
     "description": "buy myu, mint myutruvian, enjoyy",
@@ -20,10 +20,10 @@
       "nft",
       "token"
     ],
-    "tagline": "mint mutual support",
-    "ogTitle": "Myutruvian NFT",
+    "tagline": "mint peep support",
+    "ogTitle": "Myutruvian",
     "ogDescription": "Get the latest on Myceliyou, Wally the Wallet Watcher or Schmidtiest",
-    "ogImageUrl": "https://myu.schmidtiest.xyz/myu1k.png"
+    "ogImageUrl": "https://myu.schmidtiest.xyz/og-image.png"
   },
 
   "accountAssociation": {

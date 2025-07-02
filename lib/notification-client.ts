@@ -1,13 +1,14 @@
-import {
-  FrameNotificationDetails,
+// Location: /lib/notification-client.ts
+
+import { MiniAppNotificationDetails,
   type SendNotificationRequest,
   sendNotificationResponseSchema,
-} from "@farcaster/frame-sdk";
+} from "@farcaster/miniapp-sdk";
 import { getUserNotificationDetails } from "@/lib/notification";
 
 const appUrl = process.env.NEXT_PUBLIC_URL || "";
 
-type SendFrameNotificationResult =
+type SendMiniAppNotificationResult =
   | {
       state: "error";
       error: unknown;
@@ -16,7 +17,7 @@ type SendFrameNotificationResult =
   | { state: "rate_limit" }
   | { state: "success" };
 
-export async function sendFrameNotification({
+export async function sendMiniAppNotification({
   fid,
   title,
   body,
@@ -25,8 +26,8 @@ export async function sendFrameNotification({
   fid: number;
   title: string;
   body: string;
-  notificationDetails?: FrameNotificationDetails | null;
-}): Promise<SendFrameNotificationResult> {
+  notificationDetails?: MiniAppNotificationDetails | null;
+}): Promise<SendMiniAppNotificationResult> {
   if (!notificationDetails) {
     notificationDetails = await getUserNotificationDetails(fid);
   }

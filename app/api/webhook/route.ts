@@ -4,7 +4,7 @@ import {
   setUserNotificationDetails,
   deleteUserNotificationDetails,
 } from "@/lib/notification";
-import { sendFrameNotification } from "@/lib/notification-client";
+import { sendMiniAppNotification } from "@/lib/notification-client";
 import { redis, storeMintTransaction, incrementUserMints } from "@/lib/redis";
 import { http } from "viem";
 import { createPublicClient } from "viem";
@@ -98,9 +98,9 @@ export async function POST(request: Request) {
     }
 
     switch (event.event) {
-      case "frame_added":
+      case "miniapp_added":
         console.log(
-          "frame_added",
+          "miniapp_added",
           "event.notificationDetails",
           event.notificationDetails,
         );
@@ -110,7 +110,7 @@ export async function POST(request: Request) {
           // ✅ Store in Redis if available
           if (redis) {
             await redis.set(
-              `user:${fid}:frame_added`,
+              `user:${fid}:miniapp_added`,
               JSON.stringify({
                 timestamp: Date.now(),
                 notificationDetails: event.notificationDetails,
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
             );
           }
 
-          await sendFrameNotification({
+          await sendMiniAppNotification({
             fid,
             title: `Welcome to ${appName}`,
             body: `Thank you for adding ${appName}`,
@@ -129,13 +129,13 @@ export async function POST(request: Request) {
         }
         break;
 
-      case "frame_removed": {
-        console.log("frame_removed");
+      case "miniapp_removed": {
+        console.log("miniapp_removed");
         await deleteUserNotificationDetails(fid);
 
         // ✅ Remove from Redis if available
         if (redis) {
-          await redis.del(`user:${fid}:frame_added`);
+          await redis.del(`user:${fid}:miniapp_added`);
         }
         break;
       }
@@ -153,7 +153,7 @@ export async function POST(request: Request) {
           );
         }
 
-        await sendFrameNotification({
+        await sendMiniAppNotification({
           fid,
           title: `Welcome to ${appName}`,
           body: `Thank you for enabling notifications for ${appName}`,
@@ -219,7 +219,7 @@ export async function POST(request: Request) {
 
         // ✅ Send notification if user has notifications enabled
         if (data.fid) {
-          await sendFrameNotification({
+          await sendMiniAppNotification({
             fid: data.fid,
             title: "Mint Successful! 🍄",
             body: `Your Myutruvian NFT #${data.tokenId} has been minted!`,
@@ -234,7 +234,7 @@ export async function POST(request: Request) {
 
         // ✅ Notify user of failure
         if (data.fid) {
-          await sendFrameNotification({
+          await sendMiniAppNotification({
             fid: data.fid,
             title: "Mint Failed",
             body: "Your mint transaction failed. Please try again.",

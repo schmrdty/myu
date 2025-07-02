@@ -3,55 +3,55 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { useMiniKit, useAddFrame, useOpenUrl } from "@coinbase/onchainkit/minikit";
+import { useMiniKit, useAddFrame as useAddMiniApp, useOpenUrl } from "@coinbase/onchainkit/minikit";
 import { useAccount } from "wagmi";
 import { Icon, Main, Docs as Crocs } from "@/components/DemoComponents";
-import { FrameButton } from "@/components/FrameButton";
+import { MinidAppButton } from "@/components/MinidAppButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import MintWidget from "@/components/MintWidget";
 import { Docs } from "@/components/Docs";
-import { ConnectWalletButton } from "@/components/ConnectWalletButton";
 import { useChainGuard } from "@/hooks/useChainGuard";
-import { useFrameContext } from "@/hooks/useFrameContext";
+import { useMiniAppContext } from "@/hooks/useMiniAppContext";
 import { AchievementSystem } from "@/components/AchievementSystem";
 import { FungalLeaderboard } from "@/components/FungalLeaderboard";
 import { LuckyMintTracker } from "@/components/LuckyMintTracker";
 import { RarityRewardsInfo } from "@/components/RarityRewardsInfo";
+import { NotificationManager } from "@/components/NotificationManager";
 
 export function MiniKitApp() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();
   const { address } = useAccount();
-  const [frameAdded, setFrameAdded] = useState(false);
+  const [miniAppAdded, setMiniAppAdded] = useState(false);
   const [activeTab, setActiveTab] = useState("Main");
 
-  const addFrame = useAddFrame();
+  const addMiniApp = useAddMiniApp();
   const openUrl = useOpenUrl();
-  const { isFrame } = useFrameContext();
+  const { isMiniApp } = useMiniAppContext();
   const { error: chainError } = useChainGuard();
 
   useEffect(() => {
     if (!isFrameReady) setFrameReady();
   }, [setFrameReady, isFrameReady]);
 
-  const handleAddFrame = useCallback(async () => {
-    const frameAdded = await addFrame();
-    setFrameAdded(Boolean(frameAdded));
-  }, [addFrame]);
+  const handleAddMiniApp = useCallback(async () => {
+    const miniAppAdded = await addMiniApp();
+    setMiniAppAdded(Boolean(miniAppAdded));
+  }, [addMiniApp]);
 
-  const saveFrameButton = useMemo(() => {
+  const saveMiniAppButton = useMemo(() => {
     if (context && !context.client.added) {
       return (
         <button
           className="btn-cyber"
-          onClick={handleAddFrame}
+          onClick={handleAddMiniApp}
         >
           <Icon name="plus" size="sm" />
-          Save Frame
+          Save miniApp
         </button>
       );
     }
 
-    if (frameAdded) {
+    if (miniAppAdded) {
       return (
         <div className="flex items-center space-x-1 text-base font-medium text-cyber">
           <Icon name="check" size="sm" />
@@ -61,14 +61,17 @@ export function MiniKitApp() {
     }
 
     return null;
-  }, [context, frameAdded, handleAddFrame]);
+  }, [context, miniAppAdded, handleAddMiniApp]);
 
   return (
     <div className="container mx-auto px-2">
       <header className="flex justify-between items-center mb-10 mt-4">
-        {!isFrame && <ConnectWalletButton />}
         <div className="flex items-center gap-2">
-          {saveFrameButton}
+          {/* Show notification status if in miniApp */}
+          {isMiniApp && <NotificationManager />}
+        </div>
+        <div className="flex items-center gap-2">
+          {saveMiniAppButton}
           <ThemeToggle />
         </div>
       </header>
@@ -146,7 +149,7 @@ export function MiniKitApp() {
                 Connected: {address.slice(0, 6)}...{address.slice(-4)}
               </p>
             )}
-            <FrameButton />
+            <MinidAppButton />
             {chainError && (
               <div className="mt-4 text-red-600">{chainError}</div>
             )}

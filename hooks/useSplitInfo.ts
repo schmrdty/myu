@@ -1,48 +1,94 @@
-import { useReadContract } from "wagmi";
-import { CONTRACT_ADDRESS, NFT_ABI } from "@/lib/constants";
+// Location: /hooks/useSplitInfo.ts
 
-/**
- * Fetch the current payment split percentages from the contract
- */
+import { useState, useEffect } from "react";
+import { useAccount, useChainId } from "wagmi";
+import { base } from "wagmi/chains";
+import { toast } from "react-hot-toast";
+
+interface SplitInfo {
+  sendAddr: string;
+  vaultAddr: string;
+  sendPct: number;
+  vaultPct: number;
+}
+
+// Cache outside component to persist between renders
+let splitInfoCache: SplitInfo | null = null;
+let lastFetchTime = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export function useSplitInfo() {
-  console.log('🔍 DEBUG: useSplitInfo hook called');
-  
-  const { data, isLoading, error } = useReadContract({
-    abi: NFT_ABI,
-    address: CONTRACT_ADDRESS,
-    functionName: "currentSplit",
-    query: {
-      staleTime: 300_000, // Cache for 5 minutes
-    },
-  });
+  const [data, setData] = useState<SplitInfo | null>(splitInfoCache);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const isOnBase = chainId === base.id;
 
-  // Debug logs should be inside a conditional checking if data exists
-  if (data) {
-    console.log('🔍 DEBUG: Raw split from contract:', {
-      data,
-      dataType: typeof data,
-      isArray: Array.isArray(data),
-      length: Array.isArray(data) ? data.length : 'not array'
-    });
-  }
-
-  let splitInfo = null;
-  if (data && Array.isArray(data) && data.length >= 2) {
-    splitInfo = {
-      sendPct: Number(data[0]),
-      vaultPct: Number(data[1]),
-    };
+  useEffect(() => {
+    // Skip during SSR/build
+    if (typeof window === 'undefined') return;
     
-    console.log('🔍 DEBUG: Parsed split values:', {
-      sendPct: splitInfo.sendPct,
-      vaultPct: splitInfo.vaultPct,
-      total: splitInfo.sendPct + splitInfo.vaultPct
-    });
-  }
+    // Only fetch if connected and on Base
+    if (!isConnected || !isOnBase) return;
 
-  return {
-    loading: isLoading,
-    error: error ?? null,
-    data: splitInfo,
+    const fetchSplitInfo = async () => {
+      // Check cache first
+      const now = Date.now();
+      if (splitInfoCache && now - lastFetchTime < CACHE_DURATION) {
+        setData(splitInfoCache);
+        return;
+      }
+
+      // Prevent multiple simultaneous fetches
+      if (loading) return;
+
+      console.log('🔍 DEBUG: useSplitInfo hook called');
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch("/api/split-info");
+        if (!response.ok) throw new Error("Failed to fetch split info");
+        
+        const result = await response.json();
+        splitInfoCache = result;
+        lastFetchTime = now;
+        setData(result);
+      } catch (err) {
+        const error = err as Error;
+        setError(error);
+        toast.error("Failed to load payment split info");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSplitInfo();
+  }, [isConnected, isOnBase, address]);
+
+  // Manual refresh function for after mints
+  const refreshSplitInfo = async () => {
+    splitInfoCache = null; // Clear cache
+    lastFetchTime = 0;
+    
+    if (!isConnected || !isOnBase) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch("/api/split-info");
+      if (!response.ok) throw new Error("Failed to fetch split info");
+      
+      const result = await response.json();
+      splitInfoCache = result;
+      lastFetchTime = Date.now();
+      setData(result);
+    } catch (err) {
+      toast.error("Failed to refresh split info");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  return { data, loading, error, refreshSplitInfo };
 }

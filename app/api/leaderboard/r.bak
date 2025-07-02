@@ -1,0 +1,80 @@
+// Location: /app/api/leaderboard/route.ts
+
+import { NextResponse } from "next/server";
+import { createPublicClient, http, decodeEventLog } from "viem";
+import { base } from "viem/chains";
+import { CONTRACT_ADDRESS, NFT_ABI, BASE_RPC_URL } from "@/lib/constants";
+
+const publicClient = createPublicClient({
+  chain: base,
+  transport: http(BASE_RPC_URL),
+});
+
+export async function GET() {
+  try {
+    // Get all Minted events from the contract
+    const logs = await publicClient.getLogs({
+      address: CONTRACT_ADDRESS,
+      event: {
+        type: 'event',
+        name: 'Minted',
+        inputs: [
+          { indexed: true, name: 'minter', type: 'address' },
+          { indexed: true, name: 'startId', type: 'uint256' },
+          { indexed: false, name: 'count', type: 'uint256' },
+          { indexed: false, name: 'paymentToken', type: 'string' }
+        ],
+      },
+      fromBlock: 'earliest',
+      toBlock: 'latest',
+    });
+
+    // Aggregate mints per address
+    const mintsPerAddress: Record<string, number> = {};
+    
+    logs.forEach((log) => {
+      try {
+        const decoded = decodeEventLog({
+          abi: NFT_ABI,
+          data: log.data,
+          topics: log.topics,
+        });
+        
+        if (decoded.eventName === 'Minted' && decoded.args) {
+          const [minter, , count] = decoded.args as readonly [string, bigint, bigint, string];
+          const address = minter.toLowerCase();
+          mintsPerAddress[address] = (mintsPerAddress[address] || 0) + Number(count);
+        }
+      } catch (err) {
+        console.error('Error decoding log:', err);
+      }
+    });
+
+    // Convert to array and sort by mint count
+    const leaderboard = Object.entries(mintsPerAddress)
+      .map(([address, mints]) => ({
+        address: `${address.slice(0, 6)}...${address.slice(-4)}`,
+        fullAddress: address,
+        mints,
+        rank: 0,
+      }))
+      .sort((a, b) => b.mints - a.mints)
+      .slice(0, 100) // Top 100
+      .map((entry, index) => ({
+        ...entry,
+        rank: index + 1,
+      }));
+
+    return NextResponse.json({
+      leaderboard,
+      lastUpdated: new Date().toISOString(),
+      totalPlayers: Object.keys(mintsPerAddress).length,
+    });
+  } catch (error) {
+    console.error("Leaderboard error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch leaderboard" },
+      { status: 500 }
+    );
+  }
+}
