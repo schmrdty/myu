@@ -11,7 +11,7 @@ import { useSplitInfo } from "@/hooks/useSplitInfo";
 export function NotificationManager() {
   const { context } = useMiniKit();
   const [testing, setTesting] = useState(false);
-  const { refreshSplitInfo } = useSplitInfo();
+  const { refreshSplitInfo, data: splitInfo } = useSplitInfo();
   
   const hasNotifications = context?.client?.notificationDetails;
 
@@ -34,8 +34,8 @@ export function NotificationManager() {
         headers: { "Content-Type": "application/json; charset=utf-8" },
         body: JSON.stringify({
           fid: context.user.fid,
-          title: "Test Notification 🔔",
-          body: "Notifications are working! Split info refreshed.",
+          title: "Test Notifs & Tiers",
+          body: `Thanks! Current Tier: ${splitInfo?.currentTier ?? 0}`,
         }),
       });
 
@@ -44,7 +44,7 @@ export function NotificationManager() {
       const result = await response.json();
       
       if (result.state === "success") {
-        toast.success("Test notification sent!", { id: toastId });
+        toast.success(`Test notification sent! Current Tier: ${splitInfo?.currentTier ?? 0}`, { id: toastId });
       } else if (result.state === "no_token") {
         toast.error("Please enable notifications first", { id: toastId });
       } else if (result.state === "rate_limit") {
@@ -58,7 +58,7 @@ export function NotificationManager() {
     } finally {
       setTesting(false);
     }
-  }, [context, refreshSplitInfo]);
+  }, [context, refreshSplitInfo, splitInfo]);
 
   if (!context) return null;
 

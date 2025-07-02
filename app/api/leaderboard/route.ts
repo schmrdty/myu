@@ -16,7 +16,7 @@ export async function GET() {
     const currentBlock = await publicClient.getBlockNumber();
     
     // Calculate blocks to scan (e.g., last 100,000 blocks or since deployment)
-    const deploymentBlock = 12345678n; // Replace with your actual deployment block
+    const deploymentBlock = 31877875n;
     const blocksToScan = 500n; // Alchemy's limit
     
     // Aggregate mints per address

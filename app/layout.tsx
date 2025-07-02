@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
       icon: '/favicon.ico',
       apple: '/apple-icon.png',
     },
-    manifest: '/manifest.json',
+    manifest: '/manifest.webmanifest',
     openGraph: {
       title: "Myutruvian - Web3 NFT Platform",
       description: "Mint your Myutruvian NFT on Base",

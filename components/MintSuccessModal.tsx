@@ -10,7 +10,13 @@ interface MintSuccessModalProps {
   paymentMethod: "ETH" | "MYU" | "DEGEN";
   totalPaid: string;
   prerevealImage?: string;
-  splitInfo?: { sendPct: number; vaultPct: number } | null;
+  splitInfo?: { 
+    sendPct: number; 
+    vaultPct: number;
+    currentTier?: number | null;
+    isMaxTier?: boolean;
+    nextTierSplit?: [number, number] | null;
+  } | null;
 }
 
 export function MintSuccessModal({

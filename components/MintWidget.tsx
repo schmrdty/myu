@@ -18,22 +18,27 @@ import { toast } from "react-hot-toast";
 const MINT_OPTIONS = [1, 5, 10, 20, 50, 100, 500];
 
 export default function MintWidget() {
+  // State hooks first
   const [mintAmount, setMintAmount] = useState(1);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lastMintTxHash, setLastMintTxHash] = useState<string>("");
   const [lastPaymentMethod, setLastPaymentMethod] = useState<"ETH" | "MYU" | "DEGEN">("ETH");
   const [mintedTokenIds, setMintedTokenIds] = useState<number[]>([]);
 
+  // Wagmi hooks
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const { isMiniApp } = useMiniAppContext();
-  
+
+  // Computed values
   const isOnBase = chainId === base.id;
   const showWalletConnect = !isMiniApp && !isConnected;
   const showSwitchNetwork = (isConnected || isMiniApp) && !isOnBase;
   const canMint = (isConnected || isMiniApp) && isOnBase;
+  const showButtons = (isConnected && isOnBase) || (isMiniApp && isOnBase);
 
+  // Custom hooks
   const { loading: loadingMint, data: mintInfo } = useMintInfo();
   const { data: splitInfo, refreshSplitInfo } = useSplitInfo();
   const { myu: myuBalance, degen: degenBalance } = useTokenBalances();
@@ -42,20 +47,36 @@ export default function MintWidget() {
     mintInfo?.degenPrice ?? 0n
   );
 
+  // Contract write hooks
   const { writeContract: writeApproveMyu, isPending: isMyuApproving } = useWriteContract();
   const { writeContract: writeApproveDegen, isPending: isDegenApproving } = useWriteContract();
   const { writeContract: writeMintEth, isPending: isMintEth, data: ethMintHash } = useWriteContract();
   const { writeContract: writeMintMyu, isPending: isMintMyu, data: myuMintHash } = useWriteContract();
   const { writeContract: writeMintDegen, isPending: isMintDegen, data: degenMintHash } = useWriteContract();
 
+  // Transaction receipt hooks
   const { data: ethReceipt } = useWaitForTransactionReceipt({ hash: ethMintHash });
   const { data: myuReceipt } = useWaitForTransactionReceipt({ hash: myuMintHash });
   const { data: degenReceipt } = useWaitForTransactionReceipt({ hash: degenMintHash });
 
+  // Computed values that depend on other values
   const needsMyuApproval = myuAllowance < ((mintInfo?.myuPrice ?? 0n) * BigInt(mintAmount));
   const needsDegenApproval = degenAllowance < ((mintInfo?.degenPrice ?? 0n) * BigInt(mintAmount));
   const soldOut = !!(mintInfo && mintInfo.remainingMints <= 0);
   const userMaxed = !!(mintInfo && mintInfo.userMints >= 500);
+
+  // Callbacks
+  const checkConnection = useCallback(() => {
+    if (!isConnected && !isMiniApp) {
+      toast.error("Please connect your wallet first");
+      return false;
+    }
+    if (!isOnBase) {
+      toast.error("Please switch to Base network");
+      return false;
+    }
+    return true;
+  }, [isConnected, isMiniApp, isOnBase]);
 
   // Handle mint success
   useEffect(() => {
@@ -64,7 +85,7 @@ export default function MintWidget() {
       method: "ETH" | "MYU" | "DEGEN"
     ) => {
       if (!receipt || receipt.status !== 'success') return;
-      
+
       // Extract token IDs from receipt logs
       const tokenIds: number[] = [];
       receipt.logs.forEach((log: Log) => {
@@ -74,7 +95,7 @@ export default function MintWidget() {
             data: log.data,
             topics: log.topics,
           });
-          
+
           if (decoded.eventName === 'Minted' && decoded.args) {
             const [, startId, count] = decoded.args as readonly [string, bigint, bigint, string];
             const startIdNum = Number(startId);
@@ -83,21 +104,21 @@ export default function MintWidget() {
               tokenIds.push(startIdNum + i);
             }
           }
-        } catch (err) {
+        } catch {
           // Not a Minted event, skip - error handled by not adding to tokenIds
           console.debug('Skipping non-Minted event');
         }
       });
-      
+
       if (tokenIds.length > 0) {
         setMintedTokenIds(tokenIds);
         setLastMintTxHash(receipt.transactionHash);
         setLastPaymentMethod(method);
         setShowSuccessModal(true);
-        
+
         // Refresh split info after successful mint
         await refreshSplitInfo();
-        
+
         // Show success notification with address info
         toast.success(
           `Successfully minted ${tokenIds.length} NFT${tokenIds.length > 1 ? 's' : ''} to ${address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'your wallet'}!`
@@ -147,6 +168,7 @@ export default function MintWidget() {
   };
 
   const handleMintEth = () => {
+    if (!checkConnection()) return;
     const toastId = toast.loading("Minting with ETH...");
     writeMintEth({
       abi: NFT_ABI,
@@ -160,6 +182,7 @@ export default function MintWidget() {
   };
 
   const handleMintMyu = () => {
+    if (!checkConnection()) return;
     const toastId = toast.loading("Minting with MYU...");
     writeMintMyu({
       abi: NFT_ABI,
@@ -172,6 +195,7 @@ export default function MintWidget() {
   };
 
   const handleMintDegen = () => {
+    if (!checkConnection()) return;
     const toastId = toast.loading("Minting with DEGEN...");
     writeMintDegen({
       abi: NFT_ABI,
@@ -243,11 +267,15 @@ export default function MintWidget() {
         </div>
       )}
 
-      {/* Mint Amount Selector */}
+      {/* Mint Amount Selector - Add proper labels and IDs */}
       {!soldOut && !userMaxed && (
         <div className="text-center">
-          <label className="block mb-2 font-semibold">Mint Amount:</label>
+          <label htmlFor="mint-amount" className="block mb-2 font-semibold">
+            Mint Amount:
+          </label>
           <select
+            id="mint-amount"
+            name="mintAmount"
             className="rounded px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
             value={mintAmount}
             onChange={e => setMintAmount(Number(e.target.value))}
@@ -284,8 +312,8 @@ export default function MintWidget() {
           </Button>
         )}
 
-        {/* Mint Buttons */}
-        {canMint && !soldOut && !userMaxed && (
+        {/* Mint Buttons - Only show when showButtons is true */}
+        {showButtons && !soldOut && !userMaxed && (
           <>
             {/* ETH Mint */}
             <div className="space-y-1">
