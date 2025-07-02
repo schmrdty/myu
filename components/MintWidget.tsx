@@ -205,13 +205,26 @@ export default function MintWidget() {
 
       {/* Payment Split Info */}
       {splitInfo && (
-        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-sm">
+        <div className="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-sm">
           <div className="flex items-start">
             <span className="text-blue-600 dark:text-blue-400 mr-2">ℹ️</span>
-            <div>
-              <strong className="text-blue-900 dark:text-blue-300">Payment Split:</strong>
+            <div className="w-full">
+              <strong className="text-blue-900 dark:text-blue-300">Payment Split (Tier {splitInfo.currentTier}):</strong>
               <p className="text-blue-800 dark:text-blue-400 mt-1">
                 {splitInfo.vaultPct}% to vault, {splitInfo.sendPct}% to developer
+              </p>
+              {splitInfo.nextTierSplit && (
+                <p className="text-xs text-blue-700 dark:text-blue-500 mt-1">
+                  Next tier: {splitInfo.nextTierSplit[1]}% vault / {splitInfo.nextTierSplit[0]}% dev
+                </p>
+              )}
+              {splitInfo.isMaxTier && (
+                <p className="text-xs text-blue-700 dark:text-blue-500 mt-1">
+                  ✨ Maximum tier reached!
+                </p>
+              )}
+              <p className="text-xs text-blue-700 dark:text-blue-500 mt-1">
+                Payments go to different vaults based on payment method
               </p>
             </div>
           </div>

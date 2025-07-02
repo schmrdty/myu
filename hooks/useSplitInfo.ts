@@ -7,9 +7,15 @@ import { toast } from "react-hot-toast";
 
 interface SplitInfo {
   sendAddr: string;
-  vaultAddr: string;
+  ethVault: string;
+  myuVault: string;
+  degenVault: string;
   sendPct: number;
   vaultPct: number;
+  currentTier: number | null;
+  method: 'currentSplit' | 'tier' | 'fallback';
+  isMaxTier: boolean;
+  nextTierSplit: [number, number] | null;
 }
 
 // Cache outside component to persist between renders
@@ -55,6 +61,13 @@ export function useSplitInfo() {
         splitInfoCache = result;
         lastFetchTime = now;
         setData(result);
+        
+        // Log how we got the data
+        if (result.method === 'tier') {
+          console.log(`📊 Split info calculated from tier ${result.currentTier}`);
+        } else if (result.method === 'fallback') {
+          console.log('⚠️ Using fallback split values');
+        }
       } catch (err) {
         const error = err as Error;
         setError(error);
@@ -65,7 +78,7 @@ export function useSplitInfo() {
     };
 
     fetchSplitInfo();
-  }, [isConnected, isOnBase, address]);
+  }, [isConnected, isOnBase, address, loading]);
 
   // Manual refresh function for after mints
   const refreshSplitInfo = async () => {
@@ -83,6 +96,8 @@ export function useSplitInfo() {
       splitInfoCache = result;
       lastFetchTime = Date.now();
       setData(result);
+      
+      toast.success(`Split info updated! (Tier ${result.currentTier})`);
     } catch (err) {
       toast.error("Failed to refresh split info");
     } finally {
